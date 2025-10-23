@@ -1,0 +1,43 @@
+# Name des Workflows (wird in GitHub angezeigt)
+name: Deploy to Production Server
+
+# Trigger: Wann soll der Workflow starten?
+on:
+  push:
+    branches:
+      - develop  # Nur bei Push auf den "main"-Branch
+
+jobs:
+  deploy:
+    # Name des Jobs
+    name: Deploy
+
+    # Auf welchem System soll der Job laufen (ein GitHub-Runner)
+    runs-on: ubuntu-latest
+
+    steps:
+      # Schritt 1: Code auschecken (damit die Action den Code hat, falls man ihn braucht)
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Schritt 2: Die SSH-Verbindung zum Server herstellen und Befehle ausführen
+      - name: Deploy to Server
+        # Wir nutzen eine fertige Action, die den SSH-Teil vereinfacht
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}       # Holt das Secret
+          username: ${{ secrets.SSH_USER }}   # Holt das Secret
+          key: ${{ secrets.SSH_PRIVATE_KEY }} # Holt das Secret
+
+          # Das Skript, das auf DEINEM Server ausgeführt wird
+          script: |
+            cd ${{ secrets.PROJECT_PATH }}
+            git pull origin main
+
+            # Wichtige Laravel / Sail Befehle
+            ./vendor/bin/sail up -d --build  # Container neu bauen (falls Dockerfile geändert) und starten
+            ./vendor/bin/sail artisan migrate --force  # --force ist wichtig für automatisierte Skripte
+            ./vendor/bin/sail artisan config:cache
+            ./vendor/bin/sail artisan route:cache
+            ./vendor/bin/sail artisan view:cache
+            echo "Deployment erfolgreich abgeschlossen!"
