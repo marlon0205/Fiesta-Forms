@@ -19,12 +19,12 @@ The web-server would **presumably** be hosted by us, but the company should have
 	- Should be able to *create*, *edit* and *delete* forms
 	- Manage forms *Questions* and *Answers*
 
-#### Forms
-A form is a collection of *Questions* with *Answer*-Fields. They also contain a *Title*, *Description*, a *End-Date* and a associated product-/service-category.
-
-Once a Form has surpassed its *End Date*, *Answers* can no longer be submitted and the form should be marked as *Inactive*.
-
-*Admins* should be able to archive *Inactive* forms. **(Whatever that means???)**
+#### Customers
+- Ability to register and log in
+	- Data is being validated by the *Customer company*
+	- Being able to register a *Customer* to the company-database suffices **(???)**
+- Ability to change profile-information after registration
+	- Including password-reset
 
 ### GUI
 - Display poll-results graphically
@@ -35,8 +35,22 @@ Once a Form has surpassed its *End Date*, *Answers* can no longer be submitted a
 	- All active forms
 	- Archive of all expired forms
 	- Statistics **(?)**
+- Page to edit ones profile as *Customer*
+- A list-view of all available forms including results 
+	- (All non-Archived or all active forms **???**)
 
 ### Features
+#### Forms
+A form is a collection of *Questions* with *Answer*-Fields. They also contain a *Title*, *Description*, a *End-Date* and a associated product-/service-category.
+
+Once a Form has surpassed its *End Date*, *Answers* can no longer be submitted and the form should be marked as *Inactive*.
+
+*Admins* should be able to archive *Inactive* forms. **(Whatever that means???)**
+
+Active Forms can be filled out only by *Customers*. Every *Customer* can only answer once per form.
+
+Answer-Fields should be validated **before** being sent to the server
+
 #### Rewards-Program
 Create a, incentive for *Customers* to answer forms by handing out **Rewards** for the most active *Customers*. These rewards and conditions should be chosen by the *Customer*.
 
