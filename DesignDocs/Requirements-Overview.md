@@ -3,7 +3,7 @@ We are creating a web-application that other companies aren't just using, but th
 The web-server would **presumabely** be hosted by us, but the company should have the ability to [[#Connecting to Databases of Companies|connect their own database]] to their instance of our product.
 
 ## Requirements
-- [[Source Document|Pflichtenheft.pdf]]
+- [Source Document](https://github.com/marlon0205/Fiesta-Forms/blob/create-first-website-design/DesignDocs/Pflichtenheft.pdf)
 
 ### Roles
 - **Admins:** Users that have the ability to create forms that *Guests* can answer
@@ -27,7 +27,7 @@ Create a, incentive for *Customers* to answer forms by handing out **Rewards** f
 #### Connecting to Databases of Companies
 - The *Customer company* already has a database of product-/service-categories
 	- These can be sent as JSON to our service
-- - The *Customer company* already has a database of its *customers*, and wants to be able to cross-reference out *customer*-data with their own
+ - The *Customer company* already has a database of its *customers*, and wants to be able to cross-reference out *customer*-data with their own
 	**->** We need to be able to sent *customer*-data via JSON
 
 - All relevant data includes:
