@@ -27,32 +27,60 @@ The web-server would **presumably** be hosted by us, but the company should have
 	- Including password-reset
 
 ### GUI
-- Display poll-results graphically
+#### Global
+- Top right of page should show Login information
+	- Email-Adress
+	- Role
+	- For *customers* number of votes and badges
+	- If not logged in Buttons for registering/logging in
+
+#### Home-Page
+- Display most recent forms (by creation date) on the homepage
+- Number of total forms
+- Number of active forms
+- Number of registered *customers* and guests (**???**)
+- Total number of submitted answers
+- Form with most submissions
+- Form with least submissions
+- Top 3 voters
+
+#### Search
+- A list-view of all available forms including results 
+	- (All non-Archived or all active forms **???**)
 - Search forms by name
 - Filter forms by product-/service-category
-- Display most recent forms (by creation date) on the homepage
 - The following lists need to be available
 	- All active forms
 	- Archive of all expired forms
 	- Statistics **(?)**
+
+#### Form-Page
+- Display poll-results graphically
+	- Bar-chart
+	- Legend
+	- Percentages
+
+#### Profile-Page
 - Page to edit ones profile as *Customer*
-- A list-view of all available forms including results 
-	- (All non-Archived or all active forms **???**)
 
 ### Features
 #### Forms
-A form is a collection of *Questions* with *Answer*-Fields. They also contain a *Title*, *Description*, a *End-Date* and a associated product-/service-category.
+A form is a collection of *Questions* with *Answer*-Fields. They also contain a 
+- *Title*
+- *Description*
+- *Publishing-Date*
+- *active Duration*
+- an *End-Date*, *Status* (active or expired)
+- and a associated *product-* or
+- *service-category*.
 
-Once a Form has surpassed its *End Date*, *Answers* can no longer be submitted and the form should be marked as *Inactive*.
+Once a Form has surpassed its *End Date*, *Answers* can no longer be submitted and the form should be marked as *expired*.
 
-*Admins* should be able to archive *Inactive* forms. **(Whatever that means???)**
+*Admins* should be able to archive *expired* forms. **(Whatever that means???)**
 
 Active Forms can be filled out only by *Customers*. Every *Customer* can only answer once per form.
 
 Answer-Fields should be validated **before** being sent to the server
-
-#### Rewards-Program
-Create a, incentive for *Customers* to answer forms by handing out **Rewards** for the most active *Customers*. These rewards and conditions should be chosen by the *Customer*.
 
 #### Connecting to Databases of Companies
 - The *Customer company* already has a database of product-/service-categories
@@ -65,3 +93,11 @@ Create a, incentive for *Customers* to answer forms by handing out **Rewards** f
 	- *Customer*-data
 	- Product-data
 	- Service-data (as in services the *Customer-company* sells)
+
+#### Filters and Search
+- Any user should be able to filter lists of forms by *product-/service-category*
+	- All available *categories* should be listed and selectable.
+- Users should be able to perform a keyword-search across forms
+
+#### Rewards-Program
+Create a, incentive for *Customers* to answer forms by handing out **Rewards** for the most active *Customers*. These rewards and conditions should be chosen by the *Customer*.
