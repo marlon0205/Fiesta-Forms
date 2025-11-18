@@ -52,7 +52,7 @@ The web-server would **presumably** be hosted by us, but the company should have
 - The following lists need to be available
 	- All active forms
 	- Archive of all expired forms
-	- Statistics **(?)**
+	- Statistics **(???)**
 
 #### Form-Page
 - Display poll-results graphically
@@ -101,3 +101,21 @@ Answer-Fields should be validated **before** being sent to the server
 
 #### Rewards-Program
 Create a, incentive for *Customers* to answer forms by handing out **Rewards** for the most active *Customers*. These rewards and conditions should be chosen by the *Customer*.
+
+### Security
+- Passwords must be stored encrypted
+- In case of exceptions don't give the end-user information about the error
+- All database-operations should be done using *"prepared-statements"* to prevent SQL-Injections
+- Authentication 
+	- needs server-side validation
+	- Should expire after a set time
+- Registering 
+	- should require a *CAPTCHA*
+	- Needs to verify password strength
+	- Needs to verify validity of email address
+	- Needs to send validation-email
+		- Link should expire
+	- Needs to prevent double-registrations
+- The product should be tested using test protocols **(???)**
+- GDPR-Policies must be covered
+- Don't use cookies unless technically required
