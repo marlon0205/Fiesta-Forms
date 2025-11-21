@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -14,6 +14,8 @@ class User extends Authenticatable implements MustVerifyEmail {
 
 
     protected $primaryKey = 'user_id';
+
+    use HasRoles;
 
     protected $fillable = [
         'name',
@@ -31,10 +33,6 @@ class User extends Authenticatable implements MustVerifyEmail {
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
-    }
-
-    public function role() {
-        return $this->belongsTo(Role::class, 'role_id', 'role_id');
     }
 
     public function surveys() {
