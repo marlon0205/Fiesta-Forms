@@ -17,6 +17,8 @@ return new class extends Migration
             $table->foreignId('question_id')->constrained('questions', 'question_id');
             $table->foreignId('option_id')->constrained('answer_options', 'option_id');
             $table->timestamp('voted_at');
+            // created_at && updated_at timestamps
+            $table->timestamps();
         });
     }
 

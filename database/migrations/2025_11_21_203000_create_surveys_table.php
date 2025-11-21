@@ -15,7 +15,10 @@ return new class extends Migration
             $table->id('survey_id');
             $table->string('title');
             $table->string('description');
-            $table->timestamp('survey_created_at');
+
+            // created_at && updated_at timestamps
+            $table->timestamps();
+
             $table->integer('duration_days');
             $table->boolean('is_active');
 

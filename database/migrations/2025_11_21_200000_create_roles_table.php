@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('roles', function (Blueprint $table) {
             $table->id('role_id');
             $table->string('name');
+            // created_at && updated_at timestamps
+            $table->timestamps();
         });
     }
 

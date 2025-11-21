@@ -8,8 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable implements MustVerifyEmail
-{
+class User extends Authenticatable implements MustVerifyEmail {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
@@ -27,17 +26,23 @@ class User extends Authenticatable implements MustVerifyEmail
         'remember_token',
     ];
 
-    protected function casts(): array
-    {
+    protected function casts(): array {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
 
-    public function role(): HasOne
-    {
-        return $this->hasOne(Role::class);
+    public function role() {
+        return $this->belongsTo(Role::class, 'role_id', 'role_id');
+    }
+
+    public function surveys() {
+        return $this->hasMany(Survey::class, 'user_id', 'user_id');
+    }
+
+    public function votes() {
+        return $this->hasMany(Votes::class, 'user_id', 'user_id');
     }
 
 }

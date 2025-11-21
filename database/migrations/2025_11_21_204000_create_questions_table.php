@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id('question_id');;
             $table->foreignId('survey_id')->constrained('surveys', 'survey_id');
             $table->string('question_text');
+            // created_at && updated_at timestamps
+            $table->timestamps();
         });
     }
 
