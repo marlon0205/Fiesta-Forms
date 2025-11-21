@@ -20,7 +20,7 @@ return new class extends Migration
             $table->rememberToken();
             $table->timestamps();
 
-            $table->foreignId('role_id')->constrained('roles');
+            $table->foreignId('role_id')->constrained('roles', 'role_id');
             $table->boolean('is_active');
             //$table->timestamp('token_expires'); Not needed probably because laravel manages how long the verification link is valid
             $table->integer('vote_count');

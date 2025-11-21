@@ -19,9 +19,9 @@ return new class extends Migration
             $table->integer('duration_days');
             $table->boolean('is_active');
 
-            $table->foreignId('user_id')->constrained('users');
-            $table->foreignId('service_category_id')->constrained('service_categories');
-            $table->foreignId('product_category_id')->constrained('product_categories');
+            $table->foreignId('user_id')->constrained('users', 'user_id');
+            $table->foreignId('service_category_id')->constrained('service__categories', 'service_category_id');
+            $table->foreignId('product_category_id')->constrained('product__categories', 'product_category_id');
         });
     }
 
