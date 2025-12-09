@@ -2,16 +2,24 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class AnswerOptions extends Model {
+class AnswerOptions extends Model
+{
+    use HasFactory; // KORREKTUR: Trait hinzugefügt
+
     protected $primaryKey = 'option_id';
 
-    public function question() {
+    protected $fillable = ['option_text', 'question_id'];
+
+    public function question()
+    {
         return $this->belongsTo(Questions::class, 'question_id', 'question_id');
     }
 
-    public function votes() {
+    public function votes()
+    {
         return $this->hasMany(Votes::class, 'option_id', 'option_id');
     }
 }
