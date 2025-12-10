@@ -42,14 +42,27 @@ class SurveyController extends Controller
     }
 
     /**
-     * Zeigt eine spezifische Umfrage an.
+     * Zeigt eine spezifische Umfrage als JSON an (für API).
      * GET /api/surveys/{survey}
      */
     public function show(Survey $survey)
     {
         // Lade die Beziehungen für eine einzelne Umfrage
         $survey->load(['questions.answerOptions', 'user', 'serviceCategory', 'productCategory']);
-        return response()->json($survey);
+        return view("surveys.show", compact($survey));
+    }
+
+    /**
+     * Zeigt eine spezifische Umfrage als HTML an (für Blade).
+     * GET /surveys/{survey}
+     */
+    public function showView(Survey $survey)
+    {
+        // Lade die Beziehungen
+        $survey->load(['questions.answerOptions', 'user', 'serviceCategory', 'productCategory']);
+
+        // Gib die Blade-View zurück und übergebe die Variable $survey
+        return view('surveys.show', compact('survey'));
     }
 
     /**
