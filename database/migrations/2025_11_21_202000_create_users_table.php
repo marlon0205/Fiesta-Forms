@@ -12,12 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
+            $table->id('user_id');
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
+
+            //$table->foreignId('role_id')->constrained('roles', 'role_id');
+            $table->boolean('is_active');
+            //$table->timestamp('token_expires'); Not needed probably because laravel manages how long the verification link is valid
+            $table->integer('vote_count')->default(0);
+            $table->integer('badge')->default(0);
+            // created_at && updated_at timestamps
             $table->timestamps();
         });
 

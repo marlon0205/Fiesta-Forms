@@ -3,23 +3,46 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // 1. Rollen und spezifische User erstellen
+        $this->call(RoleSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $admin = User::factory()->create([
+            'name' => 'Admin',
+            'email' => 'admin@admin.de',
+            'password' => bcrypt('admin'),
         ]);
+        $admin->assignRole('admin');
+
+        $customer = User::factory()->create([
+            'name' => 'Customer',
+            'email' => 'customer@customer.de',
+            'password' => bcrypt('customer'),
+        ]);
+        $customer->assignRole('customer');
+
+        $guest = User::factory()->create([
+            'name' => 'Guest',
+            'email' => 'guest@guest.de',
+            'password' => bcrypt('guest'),
+        ]);
+        $guest->assignRole('guest');
+
+        // 2. Zusätzliche zufällige User
+        User::factory(10)->create();
+
+        // 3. Kategorien
+        $this->call([
+            ServiceCategorySeeder::class,
+            ProductCategorySeeder::class,
+        ]);
+
+        // 4. Umfragen mit Fragen und Antworten
+        $this->call(SurveySeeder::class);
     }
 }
