@@ -17,6 +17,8 @@ Route::get('/surveys/{survey}', [SurveyController::class, 'showView'])
     ->middleware(['auth']) // Optional: Nur für eingeloggte User
     ->name('surveys.show');
 
+Route::get('/api/surveys/{survey}', [SurveyController::class, 'show']);
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

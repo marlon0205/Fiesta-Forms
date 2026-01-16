@@ -49,7 +49,7 @@ class SurveyController extends Controller
     {
         // Lade die Beziehungen für eine einzelne Umfrage
         $survey->load(['questions.answerOptions', 'user', 'serviceCategory', 'productCategory']);
-        return view("surveys.show", compact($survey));
+        return response()->json($survey);
     }
 
     /**
