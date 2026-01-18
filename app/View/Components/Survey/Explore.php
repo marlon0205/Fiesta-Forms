@@ -48,10 +48,11 @@ class Explore extends Component {
         $this->categories = $services->merge($products)->sort()->values();
 
         $this->surveys = Survey::select('id', 'title', 'description', 'category')
-            ->where('title', 'like', '%' . $this->search . '%')
-            ->orWhere('description', 'like', '%' . $this->search . '%')
-            ->where('serviceCategory', $this->selectedCategory)
-            ->orWhere('productCategory', $this->selectedCategory);
+            ->whereAny(['title', 'description'], 'like', '%' . $this->search . '%')
+            ->whereAny(['serviceCategory', 'productCategory'], $this->selectedCategory)
+            // apparently this puts the searches with the title on top, thanks gemini
+            ->orderByRaw("CASE WHEN title LIKE ? THEN 1 ELSE 2 END", ['%' . $this->search . '%'])
+            ->get();
 
     }
 
