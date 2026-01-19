@@ -36,6 +36,10 @@ class Survey extends Model {
         return $this->hasMany(Questions::class, 'survey_id', 'survey_id');
     }
 
+    public function votes() {
+        return $this->hasMany(Votes::class, 'survey_id', 'survey_id');
+    }
+
     /**
      * Gibt den Namen der Spalte zurück, die für das Route Model Binding verwendet wird.
      */

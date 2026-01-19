@@ -16,7 +16,7 @@ class AnswerOptions extends Model {
         return $this->belongsTo(Questions::class, 'question_id', 'question_id');
     }
 
-    public function votes() {
-        return $this->hasMany(Votes::class, 'option_id', 'option_id');
+    public function voteAnswers() {
+        return $this->hasMany(VoteAnswers::class, 'option_id', 'option_id');
     }
 }
