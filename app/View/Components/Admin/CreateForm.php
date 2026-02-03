@@ -12,14 +12,12 @@ class CreateForm extends Component {
     /**
      * $categories is available in the blade file.
      */
-    public $categories;
+    public $productCategories;
+    public $serviceCategories;
 
     public function __construct() {
-        // TODO: what was the difference between product and service category? Can we list them in the same dropdown? If yes, that's the way.
-        $services = Service_Categories::pluck('name');
-        $products = Product_Categories::pluck('name');
-
-        $this->categories = $services->merge($products);
+        $this->serviceCategories = Service_Categories::pluck('name');
+        $this->productCategories  = Product_Categories::pluck('name');
     }
 
     /**

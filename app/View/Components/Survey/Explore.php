@@ -12,7 +12,8 @@ class Explore extends Component {
     public $surveys;
     public $categories;
     public $search;
-    public $selectedCategory;
+    public $selectedProductCategory;
+    public $selectedServiceCategory;
 
 
     public function __construct(Request $request) {
@@ -25,8 +26,8 @@ class Explore extends Component {
          */
 
         $this->search = $request->input('search');
-        $this->selectedCategory = $request->input('category');
-
+        $this->selectedProductCategory = $request->input('product_category');
+        $this->selectedServiceCategory = $request->input('service_category');
 
         /**
          * loading categories for the dropdown
@@ -44,15 +45,17 @@ class Explore extends Component {
          */
         $services = Service_Categories::pluck('name');
         $products = Product_Categories::pluck('name');
-        // merging both arrays into one
-        $this->categories = $services->merge($products)->sort()->values();
 
-        $this->surveys = Survey::select('id', 'title', 'description', 'category')
-            ->whereAny(['title', 'description'], 'like', '%' . $this->search . '%')
-            ->whereAny(['serviceCategory', 'productCategory'], $this->selectedCategory)
-            // apparently this puts the searches with the title on top, thanks gemini
-            ->orderByRaw("CASE WHEN title LIKE ? THEN 1 ELSE 2 END", ['%' . $this->search . '%'])
-            ->get();
+        // validate that the selected product and service category is a valid category
+        if ($services->contains($this->selectedServiceCategory) or $products->contains($this->selectedProductCategory)){
+            $this->surveys = Survey::select('id', 'title', 'description', 'category')
+                ->whereAny(['title', 'description'], 'like', '%' . $this->search . '%')
+                ->whereAny(['productCategory'], $this->selectedProductCategory)
+                ->whereAny(['serviceCategory'], $this->selectedServiceCategory)
+                // apparently this puts the searches with the title on top, thanks gemini
+                ->orderByRaw("CASE WHEN title LIKE ? THEN 1 ELSE 2 END", ['%' . $this->search . '%'])
+                ->get();
+        }
 
     }
 
