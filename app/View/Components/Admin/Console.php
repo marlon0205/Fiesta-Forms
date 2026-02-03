@@ -9,12 +9,6 @@ class Console extends Component {
     public $surveys;
 
     public function __construct() {
-
-        /**
-         * TODO: is it good to have a Survey -> Question -> Votes relation?
-         * What would be the advantage over Survey -> Votes?
-         */
-
         $this->surveys = Survey::withCount('votes')
         ->latest()
             ->get();
