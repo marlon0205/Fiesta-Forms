@@ -23,8 +23,8 @@ return new class extends Migration
             $table->boolean('is_active');
 
             $table->foreignId('user_id')->constrained('users', 'user_id');
-            $table->foreignId('service_category_id')->constrained('service__categories', 'service_category_id');
-            $table->foreignId('product_category_id')->constrained('product__categories', 'product_category_id');
+            $table->foreignId('service_category_id')->nullable()->constrained('service__categories', 'service_category_id');
+            $table->foreignId('product_category_id')->nullable()->constrained('product__categories', 'product_category_id');
         });
     }
 
