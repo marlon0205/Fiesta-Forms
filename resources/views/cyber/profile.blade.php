@@ -39,10 +39,10 @@ $votes = 42;
                     </div>
                 </div>
                 <div class="hidden sm:flex gap-3">
-                    <button onclick="showToast('Edit profile feature coming soon')" class="glass bg-white/50 dark:bg-slate-700/50 hover:bg-white dark:hover:bg-slate-700 text-slate-800 dark:text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all">Edit Profile</button>
+                    <button onclick="showToast('Edit profile feature coming soon')" class="glass-button bg-white/50 dark:bg-slate-700/50 hover:bg-white dark:hover:bg-slate-700 text-slate-800 dark:text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all">Edit Profile</button>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="glass bg-rose-500/50 dark:bg-rose-600/50 hover:bg-rose-500 dark:hover:bg-rose-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all">Logout</button>
+                        <button type="submit" class="glass-button bg-rose-500 dark:bg-rose-600/50 hover:bg-rose-500 dark:hover:bg-rose-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all">Logout</button>
                     </form>
                 </div>
             </div>

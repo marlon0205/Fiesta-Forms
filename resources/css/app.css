@@ -45,6 +45,17 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Glass Button - provides glass effect without background override */
+.glass-button {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.dark .glass-button {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 /* Gradient Text */
 .text-gradient {
     background-clip: text;
