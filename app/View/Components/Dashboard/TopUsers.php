@@ -11,27 +11,22 @@ class TopUsers extends Component {
     public $votes;
 
     public function __construct() {
-
-        // Either way should work fine, i want to test both when the blades are available
-        $this->votes = DB::table('votes')
-            ->select('user_id')
-            ->selectRaw('count(*) as total_votes')
-            ->groupBy('user_id')
-            ->orderByDesc('total_votes')
-            ->take(5)
-            ->get();
-
         $this->votes = Votes::select('user_id')
             ->selectRaw('count(*) as total_votes')
             ->groupBy('user_id')
             ->orderByDesc('total_votes')
             ->take(5)
             ->with('user')
-            ->get();
+            ->get()
+            ->map(fn($vote) => [
+                'name' => $vote->user->name ?? 'Anonymous Voter',
+                'votes' => $vote->total_votes
+            ]);
     }
 
     public function render() {
-        // TODO: Link correct blade file from resources/views/components
-        return view('components.dashboard.top-users');
+        return view('components.cyber.top-voters', [
+            'voters' => $this->votes
+        ]);
     }
 }

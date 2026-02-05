@@ -3,20 +3,26 @@
 namespace App\View\Components\Dashboard;
 
 use App\Models\Survey;
-use App\Models\Votes;
 use Illuminate\View\Component;
 
 class RecentActivity extends Component {
-
-    public $surveys;
+    public $recentSurveys;
 
     public function __construct() {
-        $this->surveys = Survey::latest()
-            ->take(5)->get();
+        $this->recentSurveys = Survey::latest()
+            ->take(3)
+            ->get()
+            ->map(fn($survey) => [
+                'id' => $survey->survey_id,
+                'title' => $survey->title,
+                'description' => $survey->description,
+                'category' => $survey->serviceCategory->name ?? $survey->productCategory->name ?? 'General',
+                'status' => $survey->is_active ? 'active' : 'expired',
+                'submissions' => $survey->votes()->count()
+            ]);
     }
 
     public function render() {
-        // TODO: Link correct blade file from resources/views/components
         return view('components.dashboard.recent-activity');
     }
 }
