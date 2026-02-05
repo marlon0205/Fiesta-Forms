@@ -21,9 +21,6 @@ $forms = [
             <p class="text-slate-500 dark:text-slate-400 font-medium">Manage surveys, users, and integrations.</p>
         </div>
         <div class="flex gap-3">
-            <button onclick="showToast('Source export feature coming soon')" class="glass-card hover:bg-white dark:hover:bg-slate-700 px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                <span class="material-symbols-outlined text-lg">code</span> Export Source
-            </button>
             <button onclick="showToast('Create form feature coming soon')" class="bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:scale-105 transition-all flex items-center gap-2">
                 <span class="material-symbols-outlined text-lg">add_circle</span> New Form
             </button>
