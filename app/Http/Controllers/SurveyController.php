@@ -90,7 +90,7 @@ class SurveyController extends Controller {
             }
         });
 
-        return redirect()->route('dashboard')->with('success', 'Mission launched successfully!');
+        return redirect()->route('dashboard.home')->with('success', 'Mission launched successfully!');
     }
 
 }
