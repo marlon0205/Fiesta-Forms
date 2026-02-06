@@ -85,5 +85,22 @@ class SurveySeeder extends Seeder
             ['option_text' => 'Yes, but took time'],
             ['option_text' => 'No']
         ]);
+
+        // 3. Umfrage: IT Ticket Experience (IT)
+        $survey4 = Survey::create([
+            'title' => 'Hasst du auch Berufsschule?',
+            'description' => 'Selbsterklärend.',
+            'user_id' => $user->user_id,
+            'product_category_id' => $itCat?->product_category_id,
+            'is_active' => true,
+            'duration_days' => 90
+        ]);
+
+        $q5 = $survey4->questions()->create(['question_text' => 'Was your issue resolved?']);
+        $q5->answerOptions()->createMany([
+            ['option_text' => 'Yes, quickly'],
+            ['option_text' => 'Yes, but took time'],
+            ['option_text' => 'No']
+        ]);
     }
 }

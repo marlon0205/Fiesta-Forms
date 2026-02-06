@@ -47,6 +47,6 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // 4. Umfragen mit Fragen und Antworten
-        $this->call(SurveySeeder::class);
+        //$this->call(SurveySeeder::class);
     }
 }
