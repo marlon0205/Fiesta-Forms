@@ -8,27 +8,29 @@ use App\Models\Survey;
 use Illuminate\Http\Request;
 use Illuminate\View\Component;
 
-class Explore extends Component {
+class Explore extends Component
+{
     public $surveys;
-    public $categories;
+    public $productCategories;
+    public $serviceCategories;
     public $search;
     public $selectedProductCategory;
     public $selectedServiceCategory;
 
-    public function __construct(Request $request) {
+    public function __construct(Request $request)
+    {
         $this->search = $request->input('search');
         $this->selectedProductCategory = $request->input('product_category');
         $this->selectedServiceCategory = $request->input('service_category');
 
-        // Initialize categories for the dropdown
-        $this->categories = ['Product Feedback', 'HR & Culture', 'Service Satisfaction', 'Event Registration', 'IT Support'];
+        $this->productCategories = Product_Categories::all();
+        $this->serviceCategories = Service_Categories::all();
 
-        // Start building the query
         $query = Survey::with(['productCategory', 'serviceCategory', 'votes']);
 
         // Apply Search Filter
         if ($this->search) {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('title', 'like', '%' . $this->search . '%')
                   ->orWhere('description', 'like', '%' . $this->search . '%');
             });
@@ -42,15 +44,15 @@ class Explore extends Component {
 
         // Apply Category Filters
         if ($this->selectedProductCategory) {
-             $query->whereHas('productCategory', function($q) {
-                 $q->where('name', $this->selectedProductCategory);
-             });
+            $query->whereHas('productCategory', function ($q) {
+                $q->where('name', $this->selectedProductCategory);
+            });
         }
 
         if ($this->selectedServiceCategory) {
-             $query->whereHas('serviceCategory', function($q) {
-                 $q->where('name', $this->selectedServiceCategory);
-             });
+            $query->whereHas('serviceCategory', function ($q) {
+                $q->where('name', $this->selectedServiceCategory);
+            });
         }
 
         // Execute query and map results for the view
@@ -69,7 +71,8 @@ class Explore extends Component {
         });
     }
 
-    public function render() {
+    public function render()
+    {
         return view('components.survey.explore');
     }
 }
