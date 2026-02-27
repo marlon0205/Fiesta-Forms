@@ -58,7 +58,7 @@ class SurveySeeder extends Seeder
             'description' => 'Voting for new vendor options for next month.',
             'user_id' => $user->user_id,
             'service_category_id' => $hrCat?->service_category_id,
-            'is_active' => true,
+            'is_active' => false,
             'duration_days' => 14
         ]);
 
