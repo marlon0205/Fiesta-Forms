@@ -33,15 +33,11 @@ class DatabaseSeeder extends Seeder
         ]);
         $guest->assignRole('guest');
 
-        // 2. Zusätzliche zufällige User
-        User::factory(10)->create();
-
-        $this->call(CategorySeeder::class);
-        $this->call(SurveySeeder::class);
-        $this->call(VoteSeeder::class);
-
         // 3. Kategorien
         $this->call([
+            CategorySeeder::class,
+            SurveySeeder::class,
+            VoteSeeder::class,
             ServiceCategorySeeder::class,
             ProductCategorySeeder::class,
         ]);

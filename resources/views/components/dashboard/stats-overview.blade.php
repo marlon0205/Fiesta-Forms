@@ -18,8 +18,8 @@
         gradient="from-violet-500 to-purple-400"
     />
     <x-cyber.kpi-card
-        label="Impact Score"
-        :value="is_numeric($impactScore) ? number_format($impactScore * 100, 1) . '%' : $impactScore"
+        label="Total Users"
+        :value="number_format($totalUsers)"
         icon="trending_up"
         gradient="from-orange-500 to-amber-400"
     />
