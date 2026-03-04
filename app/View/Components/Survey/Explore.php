@@ -8,59 +8,71 @@ use App\Models\Survey;
 use Illuminate\Http\Request;
 use Illuminate\View\Component;
 
-class Explore extends Component {
+class Explore extends Component
+{
     public $surveys;
-    public $categories;
+    public $productCategories;
+    public $serviceCategories;
     public $search;
     public $selectedProductCategory;
     public $selectedServiceCategory;
 
-
-    public function __construct(Request $request) {
-        /**
-         * the logic behind the explore page is the following:
-         * We load the tab and check for filters set (example: ?search=Book&category=IT)
-         * When filters are set then we directly apply them into the query
-         *
-         * We also need to load the categories for the dropdown
-         */
-
+    public function __construct(Request $request)
+    {
         $this->search = $request->input('search');
         $this->selectedProductCategory = $request->input('product_category');
         $this->selectedServiceCategory = $request->input('service_category');
 
-        /**
-         * loading categories for the dropdown
-         *
-         * Difference between pluck and all
-         *
-         * pluck returns a lightweight Collection of raw Strings
-         * all returns a Collection of the Models where only name is returned
-         *
-         * pluck:
-         * ["IT", "Food", "Sports"]
-         *
-         * all:
-         * [{"name": "IT"}, {"name": "Food"}, {"name": "Sports"}]
-         */
-        $services = Service_Categories::pluck('name');
-        $products = Product_Categories::pluck('name');
+        $this->productCategories = Product_Categories::all();
+        $this->serviceCategories = Service_Categories::all();
 
-        // validate that the selected product and service category is a valid category
-        if ($services->contains($this->selectedServiceCategory) or $products->contains($this->selectedProductCategory)){
-            $this->surveys = Survey::select('id', 'title', 'description', 'category')
-                ->whereAny(['title', 'description'], 'like', '%' . $this->search . '%')
-                ->whereAny(['productCategory'], $this->selectedProductCategory)
-                ->whereAny(['serviceCategory'], $this->selectedServiceCategory)
-                // apparently this puts the searches with the title on top, thanks gemini
-                ->orderByRaw("CASE WHEN title LIKE ? THEN 1 ELSE 2 END", ['%' . $this->search . '%'])
-                ->get();
+        $query = Survey::with(['productCategory', 'serviceCategory', 'votes']);
+
+        // Apply Search Filter
+        if ($this->search) {
+            $query->where(function ($q) {
+                $q->where('title', 'like', '%' . $this->search . '%')
+                  ->orWhere('description', 'like', '%' . $this->search . '%');
+            });
+
+            // Order by relevance if searching
+            $query->orderByRaw("CASE WHEN title LIKE ? THEN 1 ELSE 2 END", ['%' . $this->search . '%']);
+        } else {
+            // Default ordering
+            $query->latest();
         }
 
+        // Apply Category Filters
+        if ($this->selectedProductCategory) {
+            $query->whereHas('productCategory', function ($q) {
+                $q->where('name', $this->selectedProductCategory);
+            });
+        }
+
+        if ($this->selectedServiceCategory) {
+            $query->whereHas('serviceCategory', function ($q) {
+                $q->where('name', $this->selectedServiceCategory);
+            });
+        }
+
+        // Execute query and map results for the view
+        $this->surveys = $query->get()->map(function ($survey) {
+            return [
+                'survey_id' => $survey->survey_id,
+                'title' => $survey->title,
+                'description' => $survey->description,
+                // Ensure is_active is mapped to 'active' string if true, as expected by the view
+                'is_active' => $survey->is_active ? 'active' : 'expired',
+                'status' => $survey->is_active ? 'Active' : 'Expired',
+                // Determine category: either product or service
+                'category' => $survey->productCategory->name ?? $survey->serviceCategory->name ?? 'General',
+                'submissions' => $survey->votes->count(),
+            ];
+        });
     }
 
-    public function render() {
-        // TODO: Link correct blade file from resources/views/components
+    public function render()
+    {
         return view('components.survey.explore');
     }
 }

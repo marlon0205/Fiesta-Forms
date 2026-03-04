@@ -1,11 +1,11 @@
 @props(['form'])
 
 @php
-$isActive = $form['status'] === 'active';
+$isActive = $form['is_active'] === 'active';
 $statusColor = $isActive ? 'bg-emerald-500' : 'bg-slate-500';
 @endphp
 
-<div onclick="window.location.href='{{ route('dashboard.form-detail', $form['id']) }}'" class="group glass-card rounded-[2rem] overflow-hidden cursor-pointer hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col h-full relative">
+<div onclick="window.location.href='{{ route('dashboard.form-detail', $form['survey_id']) }}'" class="group glass-card rounded-[2rem] overflow-hidden cursor-pointer hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col h-full relative">
     <!-- Image Area -->
     <div class="h-40 bg-slate-200 dark:bg-slate-800 relative overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
