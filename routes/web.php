@@ -27,9 +27,8 @@ Route::prefix('dashboard')->name('dashboard.')->group(function () {
 
 // Protected Cyber Dashboard Routes (auth required)
 Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')->group(function () {
-    Route::get('/admin', function () {
-        return view('cyber.admin');
-    })->name('admin');
+    Route::get('/admin', [SurveyController::class, 'index'])->name('admin');
+    Route::delete('/admin/survey/{survey}', [SurveyController::class, 'destroy'])->name('admin.survey.destroy');
 
     Route::get('/profile', function () {
         return view('cyber.profile');
