@@ -6,9 +6,9 @@ use App\Models\Survey;
 use App\Models\Service_Categories;
 use App\Models\Product_Categories;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SurveyController extends Controller {
 
@@ -91,6 +91,53 @@ class SurveyController extends Controller {
         });
 
         return redirect()->route('dashboard.home')->with('success', 'Mission launched successfully!');
+    }
+
+    /**
+     * Display the admin dashboard with all surveys
+     */
+    public function index()
+    {
+        $surveys = Survey::with(['user', 'serviceCategory', 'productCategory', 'votes'])
+            ->withCount('votes')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('cyber.admin', compact('surveys'));
+    }
+
+    /**
+     * Delete a survey and all related data
+     */
+    public function destroy(Survey $survey)
+    {
+        try {
+            $surveyTitle = $survey->title;
+
+            // Delete related records first
+            DB::transaction(function () use ($survey) {
+                // Delete all votes for this survey
+                $survey->votes()->delete();
+
+                // Delete all answer options for questions in this survey
+                foreach ($survey->questions as $question) {
+                    $question->answerOptions()->delete();
+                }
+
+                // Delete all questions for this survey
+                $survey->questions()->delete();
+
+                // Finally delete the survey itself
+                $survey->delete();
+            });
+
+            return redirect()->route('dashboard.admin')
+                ->with('success', "Survey '{$surveyTitle}' has been successfully deleted");
+        } catch (\Exception $e) {
+            Log::error('Failed to delete survey: ' . $e->getMessage());
+            return redirect()->route('dashboard.admin')
+                ->with('error', 'Failed to delete survey: ' . $e->getMessage());
+        }
     }
 
 }

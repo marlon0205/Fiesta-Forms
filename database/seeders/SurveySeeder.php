@@ -58,7 +58,7 @@ class SurveySeeder extends Seeder
             'description' => 'Voting for new vendor options for next month.',
             'user_id' => $user->user_id,
             'service_category_id' => $hrCat?->service_category_id,
-            'is_active' => true,
+            'is_active' => false,
             'duration_days' => 14
         ]);
 
@@ -81,6 +81,40 @@ class SurveySeeder extends Seeder
 
         $q4 = $survey3->questions()->create(['question_text' => 'Was your issue resolved?']);
         $q4->answerOptions()->createMany([
+            ['option_text' => 'Yes, quickly'],
+            ['option_text' => 'Yes, but took time'],
+            ['option_text' => 'No']
+        ]);
+
+        // 3. Umfrage: IT Ticket Experience (IT)
+        $survey4 = Survey::create([
+            'title' => 'Hasst du auch Berufsschule?',
+            'description' => 'Selbsterklärend.',
+            'user_id' => $user->user_id,
+            'product_category_id' => $itCat?->product_category_id,
+            'is_active' => true,
+            'duration_days' => 90
+        ]);
+
+        $q5 = $survey4->questions()->create(['question_text' => 'Was your issue resolved?']);
+        $q5->answerOptions()->createMany([
+            ['option_text' => 'Yes, quickly'],
+            ['option_text' => 'Yes, but took time'],
+            ['option_text' => 'No']
+        ]);
+
+        // 3. Umfrage: IT Ticket Experience (IT)
+        $survey5 = Survey::create([
+            'title' => 'Hasst du auch Berufsschule?',
+            'description' => 'Selbsterklärend.',
+            'user_id' => $user->user_id,
+            'product_category_id' => $itCat?->product_category_id,
+            'is_active' => true,
+            'duration_days' => 90
+        ]);
+
+        $q6 = $survey5->questions()->create(['question_text' => 'Was your issue resolved?']);
+        $q6->answerOptions()->createMany([
             ['option_text' => 'Yes, quickly'],
             ['option_text' => 'Yes, but took time'],
             ['option_text' => 'No']
