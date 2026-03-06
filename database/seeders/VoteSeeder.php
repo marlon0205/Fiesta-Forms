@@ -24,13 +24,12 @@ class VoteSeeder extends Seeder
             $randomVoters = $voters->random($voteCount);
 
             foreach ($randomVoters as $voter) {
-
                 // 1. Die Teilnahme (Vote) erstellen
                 $vote = Votes::create([
                     'survey_id' => $survey->survey_id,
                     'user_id' => $voter->user_id,
                     // Zufälliges Datum in den letzten 30 Tagen für schöne Charts
-                    'created_at' => now()->subDays(rand(0, 30))
+                    'created_at' => now()->subDays(rand(0, 30)),
                 ]);
 
                 // 2. Für jede Frage der Umfrage eine Antwort generieren
@@ -41,7 +40,7 @@ class VoteSeeder extends Seeder
                     // Antwort speichern
                     $vote->answers()->create([
                         'question_id' => $question->question_id,
-                        'option_id' => $randomOption->option_id
+                        'option_id' => $randomOption->option_id,
                     ]);
                 }
             }
