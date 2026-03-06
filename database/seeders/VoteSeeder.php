@@ -28,7 +28,6 @@ class VoteSeeder extends Seeder
                 $vote = Votes::create([
                     'survey_id' => $survey->survey_id,
                     'user_id' => $voter->user_id,
-                    // Zufälliges Datum in den letzten 30 Tagen für schöne Charts
                     'created_at' => now()->subDays(rand(0, 30)),
                 ]);
 
