@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Survey;
 use App\Models\Service_Categories;
 use App\Models\Product_Categories;
+use App\Models\Votes;
+use App\Models\VoteAnswers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +14,85 @@ use Illuminate\Support\Facades\Log;
 
 class SurveyController extends Controller {
 
+
+    /**
+     * Display the survey detail page for both customers (to vote) and guests (to see results).
+     */
+    public function show(Survey $survey)
+    {
+        $survey->load(['questions.answerOptions', 'serviceCategory', 'productCategory']);
+        $totalSubmissions = $survey->votes()->count();
+
+        // Calculate results
+        $results = [];
+        foreach ($survey->questions as $question) {
+            $questionResults = [];
+            foreach ($question->answerOptions as $option) {
+                $optionVotes = $question->voteAnswers()->where('option_id', $option->option_id)->count();
+                $percentage = $totalSubmissions > 0 ? round(($optionVotes / $totalSubmissions) * 100) : 0;
+                $questionResults[] = [
+                    'label' => $option->option_text,
+                    'votes' => $optionVotes,
+                    'percentage' => $percentage
+                ];
+            }
+            $results[$question->question_id] = [
+                'question_text' => $question->question_text,
+                'options' => $questionResults
+            ];
+        }
+
+        return view('cyber.form-detail', [
+            'survey' => $survey,
+            'results' => $results,
+            'totalSubmissions' => $totalSubmissions,
+            'id' => $survey->survey_id
+        ]);
+    }
+
+    /**
+     * Store a new vote for the survey.
+     */
+    public function vote(Request $request, Survey $survey)
+    {
+        // Check if user has already voted
+        if ($survey->votes()->where('user_id', Auth::id())->exists()) {
+            return redirect()->back()->with('error', 'You have already voted on this survey.');
+        }
+
+        // Ensure every question in the survey has an answer
+        $questionIds = $survey->questions->pluck('question_id')->toArray();
+        $rules = [];
+        foreach ($questionIds as $id) {
+            $rules["questions.$id"] = 'required|exists:answer_options,option_id';
+        }
+
+        $validated = $request->validate($rules, [
+            'questions.*.required' => 'Please answer all questions before submitting.',
+        ]);
+
+        try {
+            DB::transaction(function () use ($validated, $survey) {
+                $vote = Votes::create([
+                    'survey_id' => $survey->survey_id,
+                    'user_id' => Auth::id(),
+                ]);
+
+                foreach ($validated['questions'] as $questionId => $optionId) {
+                    VoteAnswers::create([
+                        'vote_id' => $vote->vote_id,
+                        'question_id' => $questionId,
+                        'option_id' => $optionId,
+                    ]);
+                }
+            });
+
+            return redirect()->route('dashboard.home')->with('success', 'Thank you for your feedback!');
+        } catch (\Exception $e) {
+            Log::error('Failed to store vote: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to submit vote. Please try again.');
+        }
+    }
 
     /**
      * Zeigt eine spezifische Umfrage als HTML an (für Blade).
