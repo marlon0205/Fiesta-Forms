@@ -121,7 +121,7 @@
                             <div class="flex items-center justify-between mb-3 px-1">
                                 <div class="flex items-center gap-1">
                                     <span class="text-slate-700 dark:text-slate-300 font-bold group-hover:text-indigo-500 transition-colors">{{ $option['label'] }}</span>
-                                    <span class="text-xs font-black px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-zinc-500">{{ $option['votes'] }} votes</span>
+                                    <span class="text-xs font-black px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-zinc-400">{{ $option['votes'] }} votes</span>
                                 </div>
                                 <span class="font-black text-indigo-600 dark:text-indigo-400">{{ $option['percentage'] }}%</span>
                             </div>
