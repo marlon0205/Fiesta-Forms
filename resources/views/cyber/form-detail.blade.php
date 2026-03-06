@@ -71,7 +71,7 @@
         @if($alreadyVoted)
         <div class="mb-8 p-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-3xl flex items-center gap-4 backdrop-blur-sm">
             <div class="bg-emerald-500 text-white p-2 rounded-full shadow-lg">
-                <span class="material-symbols-outlined">done_all</span>
+                <span class="material-symbols-outlined mt-1">done_all</span>
             </div>
             <div>
                 <span class="font-black text-lg">Response Captured!</span>
@@ -81,7 +81,7 @@
         @elseif(!auth()->check())
         <div class="mb-8 p-6 bg-indigo-500/10 border border-indigo-500/20 text-indigo-700 dark:text-indigo-400 rounded-3xl flex items-center gap-4 backdrop-blur-sm">
             <div class="bg-indigo-500 text-white p-2 rounded-full shadow-lg">
-                <span class="material-symbols-outlined">lock</span>
+                <span class="material-symbols-outlined mt-1">lock</span>
             </div>
             <div>
                 <span class="font-black text-lg">Results Only</span>
