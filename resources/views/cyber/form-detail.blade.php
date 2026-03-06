@@ -109,7 +109,7 @@
 
             <div class="p-10 space-y-16">
                 @foreach($results as $qId => $qData)
-                <div class="animate-float mb-8" style="animation-delay: {{ $loop->index * 150 }}ms">
+                <div class="mb-8">
                     <div class="flex items-center gap-4 mb-2">
                         <div class="h-10 w-1 bg-indigo-500 rounded-full"></div>
                         <h4 class="font-black text-slate-800 dark:text-slate-200 text-2xl tracking-tight">{{ $qData['question_text'] }}</h4>
