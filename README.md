@@ -1,134 +1,74 @@
-# Fiesta-Forms
+# Fiesta Forms 📝
 
-Willkommen bei **Fiesta-Forms**. Dieses Projekt ist eine Laravel-Anwendung, die Docker (via Laravel Sail) für die Entwicklungsumgebung nutzt.
+Fiesta Forms is a modern, interactive survey and form management application built with Laravel 12, PHP 8.4, and Tailwind CSS.
 
-## 📋 Voraussetzungen
-
-Bevor du startest, stelle sicher, dass folgende Software installiert ist:
-
-### Für Linux & macOS
-- [Docker Engine](https://docs.docker.com/engine/install/) & [Docker Compose](https://docs.docker.com/compose/install/)
-- Git
-
-### Für Windows
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [WSL2](https://learn.microsoft.com/de-de/windows/wsl/install) (Windows Subsystem for Linux)
-    - *Empfehlung:* Führe alle Befehle innerhalb einer WSL2-Distro (z. B. Ubuntu) aus, um Performance-Probleme zu vermeiden.
+This project is designed to be set up and managed entirely through the included `fiesta.sh` management script, ensuring a seamless experience using Laravel Sail (Docker).
 
 ---
 
-## 🚀 Installation & Setup
+## 🚀 Quick Start
 
-Folge diesen Schritten, um das Projekt lokal zum Laufen zu bringen.
+### 1. Prerequisites
+Ensure you have the following installed and running on your system:
+- **Git**
+- **Docker** (and Docker Compose)
 
-### 1. Repository klonen
+### 2. Installation
+You can set up the entire project with a single command. Choose one of the two methods below:
+
+#### Method A: Clone and Run (Recommended)
 ```bash
-git clone <DEIN-REPO-URL>
+git clone https://github.com/marlon0205/Fiesta-Forms.git
 cd Fiesta-Forms
+chmod +x fiesta.sh
+./fiesta.sh
 ```
 
-### 2. Umgebungsvariablen konfigurieren
-Kopiere die Beispiel-Konfiguration:
+#### Method B: Direct Script Execution
+If you only have the `fiesta.sh` file, simply run it in an empty directory:
 ```bash
-cp .env.example .env
+bash fiesta.sh
 ```
-*Hinweis:* Die Standard-Einstellungen in der `.env` sind bereits für die Docker-Umgebung (Sail) vorkonfiguriert (PostgreSQL, Redis etc.).
+The script will automatically clone the repository and start the setup.
 
-### 3. Abhängigkeiten installieren
-Da wir Sail nutzen, können wir einen kleinen Container verwenden, um die PHP-Abhängigkeiten zu installieren, ohne PHP lokal installiert haben zu müssen:
+### 3. Choose "Setup/Install"
+In the interactive menu, select **Option 1 (Setup/Install)**. This will:
+- Create your `.env` file (configured for SQLite by default).
+- Install all Composer and NPM dependencies.
+- Start the Docker containers via Laravel Sail.
+- Run migrations and seed the database with sample data.
+- Build the frontend assets.
 
-```bash
-docker run --rm \
-    -u "$(id -u):$(id -g)" \
-    -v "$(pwd):/var/www/html" \
-    -w /var/www/html \
-    laravelsail/php84-composer:latest \
-    composer install --ignore-platform-reqs
-```
-
-### 4. Docker Container starten (Sail)
-Starte die Anwendung im Hintergrund:
-```bash
-./vendor/bin/sail up -d
-```
-*Dies kann beim ersten Mal einige Minuten dauern, da die Images gebaut werden.*
-
-### 5. Key generieren & Frontend bauen
-Sobald die Container laufen:
-
-```bash
-# App Key generieren
-./vendor/bin/sail artisan key:generate
-
-# Node-Abhängigkeiten installieren und Assets bauen
-./vendor/bin/sail npm install
-./vendor/bin/sail npm run build
-```
-
-### 6. Datenbank einrichten
-Führe die Migrationen und Seeder aus, um die Datenbank zu füllen:
-```bash
-./vendor/bin/sail artisan migrate --seed
-```
+Once finished, you can access the app at: **[http://localhost](http://localhost)**
 
 ---
 
-## 🏁 Starten & Nutzen
+## 🛠 Project Management
 
-Die Anwendung ist nun unter folgender Adresse erreichbar:
+Run `./fiesta.sh` at any time to access the management menu:
 
-👉 **http://localhost**
-
-### Entwicklung (Hot Reloading)
-Für die Frontend-Entwicklung (Vite) starte den Dev-Server:
-```bash
-./vendor/bin/sail npm run dev
-```
-
-### Container stoppen
-```bash
-./vendor/bin/sail down
-```
+| Option | Action | Description |
+| :--- | :--- | :--- |
+| **1** | **Setup/Install** | Initial project scaffolding, dependency installation, and DB seeding. |
+| **2** | **Update** | Pulls latest code from GitHub, updates dependencies, and runs migrations. |
+| **3** | **Rebuild** | Performs a hard reset: wipes the DB, recreates containers, and re-seeds data. |
+| **4** | **Start** | Boots up the Laravel Sail containers in the background. |
+| **5** | **Stop** | Gracefully stops all project containers. |
+| **6** | **Restart** | Restarts the Sail services. |
 
 ---
 
-## 🛠 Nützliche Befehle & Skripte
+## ⚙️ Technical Details
 
-### Sail Alias (Optional)
-Um nicht immer `./vendor/bin/sail` tippen zu müssen, kannst du einen Alias setzen:
-```bash
-alias sail='[ -f sail ] && bash sail || bash vendor/bin/sail'
-```
-Dann kannst du Befehle einfach so nutzen: `sail artisan ...`
+- **Backend:** Laravel 12 (PHP 8.4)
+- **Frontend:** Tailwind CSS, Vite, Alpine.js
+- **Environment:** Laravel Sail (Docker)
+- **Database:** SQLite (Default for development) or PostgreSQL (Configurable in `.env`)
 
-### Datenbank zurücksetzen
-Im Projekt liegt ein Hilfsskript `reset-db.sh`, das die Datenbank komplett löscht, neu aufbaut und mit Testdaten füllt.
-
-**Nutzung (Linux/Mac/WSL):**
-```bash
-chmod +x reset-db.sh  # Einmalig ausführbar machen
-./reset-db.sh
-```
-
-### Tests ausführen
-```bash
-./vendor/bin/sail test
-```
+### Troubleshooting "Breakout Detected"
+If you encounter a "container breakout detected" error during setup, simply wait a few seconds for Docker to fully initialize the mount points and run the command again. The script includes built-in wait times to minimize this.
 
 ---
 
-## 🐛 Troubleshooting
-
-**Berechtigungsprobleme (Linux):**
-Falls du Schreibrechte-Fehler bekommst, stelle sicher, dass dein User Eigentümer der Dateien ist:
-```bash
-sudo chown -R $USER:$USER .
-```
-
-**Port belegt:**
-Falls Port 80 oder 5432 (Postgres) belegt sind, kannst du diese in der `.env` Datei ändern:
-```dotenv
-APP_PORT=8080
-FORWARD_DB_PORT=5433
-```
-Danach `sail up -d` neu ausführen.
+## 📄 License
+This project is open-source software licensed under the [MIT license](https://opensource.org/licenses/MIT).
