@@ -14,16 +14,18 @@ use Illuminate\Support\Facades\Log;
 
 class SurveyController extends Controller {
 
-
     /**
      * Display the survey detail page for both customers (to vote) and guests (to see results).
      */
-    public function show(Survey $survey)
-    {
+    public function show(Survey $survey){
+
         $survey->load(['questions.answerOptions', 'serviceCategory', 'productCategory']);
         $totalSubmissions = $survey->votes()->count();
 
         // Calculate results
+        // Loops through the questions and possible answerOptions to calculate the percentages and count the votes
+        // At the end each question will be put in to the results array with their id as index.
+        // The results array then will be send into the frontend
         $results = [];
         foreach ($survey->questions as $question) {
             $questionResults = [];
@@ -33,12 +35,12 @@ class SurveyController extends Controller {
                 $questionResults[] = [
                     'label' => $option->option_text,
                     'votes' => $optionVotes,
-                    'percentage' => $percentage
+                    'percentage' => $percentage,
                 ];
             }
             $results[$question->question_id] = [
                 'question_text' => $question->question_text,
-                'options' => $questionResults
+                'options' => $questionResults,
             ];
         }
 
@@ -46,31 +48,41 @@ class SurveyController extends Controller {
             'survey' => $survey,
             'results' => $results,
             'totalSubmissions' => $totalSubmissions,
-            'id' => $survey->survey_id
+            'id' => $survey->survey_id,
         ]);
     }
 
     /**
      * Store a new vote for the survey.
      */
-    public function vote(Request $request, Survey $survey)
-    {
+    public function vote(Request $request, Survey $survey){
         // Check if user has already voted
         if ($survey->votes()->where('user_id', Auth::id())->exists()) {
             return redirect()->back()->with('error', 'You have already voted on this survey.');
         }
 
         // Ensure every question in the survey has an answer
-        $questionIds = $survey->questions->pluck('question_id')->toArray();
-        $rules = [];
-        foreach ($questionIds as $id) {
-            $rules["questions.$id"] = 'required|exists:answer_options,option_id';
-        }
+        $questionCount = $survey->questions->count();
 
-        $validated = $request->validate($rules, [
-            'questions.*.required' => 'Please answer all questions before submitting.',
+        // the first array in the validate method are the rules. The second array are the error messages.
+        $validated = $request->validate([
+            // 1. Check the array itself: Make sure they submitted exactly the right number of answers
+            'questions'   => ['required', 'array', 'size:' . $questionCount],
+
+            // Apply rule to every answer in the array
+            'questions.*' => ['required', 'exists:answer_options,option_id'],
+        ], [
+            'questions.size' => 'Please answer all questions before submitting.',
+            'questions.*.exists' => 'One of the selected options is invalid.',
         ]);
 
+
+        // loops through the user's answers. For every answer it creates a new record.
+        // "use ($validated, $survey)" is necessary so we can access the data inside the transaction function.
+        // first we create the votes for the user and the survey then we save the VoteAnswers.
+        //
+        // Votes only save the userId and SurveyId so we know if they voted for a specific survey.
+        // VoteAnswers saves the answers a user has given to a specific question per survey.
         try {
             DB::transaction(function () use ($validated, $survey) {
                 $vote = Votes::create([
@@ -87,7 +99,7 @@ class SurveyController extends Controller {
                 }
             });
 
-            return redirect()->route('dashboard.home')->with('success', 'Thank you for your feedback!');
+            return redirect()->route('dashboard.explore')->with('success', 'Thank you for your feedback!');
         } catch (\Exception $e) {
             Log::error('Failed to store vote: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to submit vote. Please try again.');
@@ -95,22 +107,11 @@ class SurveyController extends Controller {
     }
 
     /**
-     * Zeigt eine spezifische Umfrage als HTML an (für Blade).
-     * GET /surveys/{survey}
-     */
-    public function showView(Survey $survey) {
-        // Lade die Beziehungen
-        $survey->load(['questions.answerOptions', 'user', 'serviceCategory', 'productCategory']);
-
-        // Gib die Blade-View zurück und übergebe die Variable $survey
-        return view('surveys.show', compact('survey'));
-    }
-
-    /**
      * Speichert eine neue Umfrage inkl. Fragen und Optionen.
      * POST /surveys
      */
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -129,7 +130,6 @@ class SurveyController extends Controller {
          * Why transaction? -> If the server crashes in the middle of an operation everything will be reset.
          */
         DB::transaction(function () use ($validated) {
-
             /**
              * search for the ID based on the name of the category
              */
@@ -156,7 +156,7 @@ class SurveyController extends Controller {
              */
             foreach ($validated['questions'] as $qData) {
                 $question = $survey->questions()->create([
-                    'question_text' => $qData['text']
+                    'question_text' => $qData['text'],
                 ]);
 
                 foreach ($qData['options'] as $optText) {
@@ -220,5 +220,4 @@ class SurveyController extends Controller {
                 ->with('error', 'Failed to delete survey: ' . $e->getMessage());
         }
     }
-
 }

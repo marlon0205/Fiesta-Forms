@@ -37,5 +37,6 @@ class DatabaseSeeder extends Seeder
             SurveySeeder::class,
             VoteSeeder::class,
         ]);
+
     }
 }
