@@ -9,7 +9,6 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Rollen und spezifische User erstellen
         $this->call(RoleSeeder::class);
 
         $admin = User::factory()->create([
@@ -33,16 +32,11 @@ class DatabaseSeeder extends Seeder
         ]);
         $guest->assignRole('guest');
 
-        // 3. Kategorien
         $this->call([
             CategorySeeder::class,
             SurveySeeder::class,
             VoteSeeder::class,
-            ServiceCategorySeeder::class,
-            ProductCategorySeeder::class,
         ]);
 
-        // 4. Umfragen mit Fragen und Antworten
-        //$this->call(SurveySeeder::class);
     }
 }

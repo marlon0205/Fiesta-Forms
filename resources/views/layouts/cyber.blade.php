@@ -146,6 +146,22 @@
             });
         });
     </script>
+    @if(session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                showToast("{{ session('success') }}");
+            });
+        </script>
+    @endif
+
+    @if(session('error'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                showToast("{{ session('error') }}");
+                document.getElementById('toast').classList.replace('border-pink-500', 'border-red-500');
+            });
+        </script>
+    @endif
 </body>
 </html>
 

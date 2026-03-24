@@ -16,7 +16,6 @@ class QuestionsFactory extends Factory
         return [
             'survey_id' => Survey::factory(),
             'question_text' => $this->faker->sentence . '?',
-            // KORREKTUR: 'question_type' entfernt, da Spalte nicht existiert
         ];
     }
 }
