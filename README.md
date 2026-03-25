@@ -1,74 +1,76 @@
 # Fiesta Forms 📝
 
-Fiesta Forms is a modern, interactive survey and form management application built with Laravel 12, PHP 8.4, and Tailwind CSS.
+Fiesta Forms ist eine moderne, interaktive Anwendung zur Verwaltung von Umfragen und Formularen, entwickelt mit Laravel 12, PHP 8.4 und Tailwind CSS.
 
-This project is designed to be set up and managed entirely through the included `fiesta.sh` management script, ensuring a seamless experience using Laravel Sail (Docker).
+## 🚀 Voraussetzungen
 
----
+Für die lokale Entwicklung benötigst du folgende Software:
 
-## 🚀 Quick Start
+- **Docker** (Desktop oder Engine)
+- **Composer** (PHP Dependency Manager)
+- **Node.js** & **npm** (für Frontend-Assets)
 
-### 1. Prerequisites
-Ensure you have the following installed and running on your system:
-- **Git**
-- **Docker** (and Docker Compose)
+## 🛠 Installation & Einrichtung
 
-### 2. Installation
-You can set up the entire project with a single command. Choose one of the two methods below:
+Folge diesen Schritten, um das Projekt zum ersten Mal einzurichten:
 
-#### Method A: Clone and Run (Recommended)
+### 1. Repository klonen
 ```bash
-git clone https://github.com/marlon0205/Fiesta-Forms.git
+git clone https://github.com/marlon0205/Fiesta-Forms
 cd Fiesta-Forms
-chmod +x fiesta.sh
-./fiesta.sh
 ```
 
-#### Method B: Direct Script Execution
-If you only have the `fiesta.sh` file, simply run it in an empty directory:
+### 2. Umgebungsvariablen setzen
+Kopiere die Beispiel-Konfiguration in eine aktive `.env` Datei:
 ```bash
-bash fiesta.sh
+cp .env.example .env
 ```
-The script will automatically clone the repository and start the setup.
+Öffne die `.env` Datei und passe sie gegebenenfalls an. Die Standardkonfiguration (SQLite) ist für die lokale Entwicklung bereits optimiert.
 
-### 3. Choose "Setup/Install"
-In the interactive menu, select **Option 1 (Setup/Install)**. This will:
-- Create your `.env` file (configured for SQLite by default).
-- Install all Composer and NPM dependencies.
-- Start the Docker containers via Laravel Sail.
-- Run migrations and seed the database with sample data.
-- Build the frontend assets.
+### 3. Abhängigkeiten installieren
+Lade die PHP-Abhängigkeiten (inklusive Laravel Sail) herunter:
+```bash
+composer install
+```
 
-Once finished, you can access the app at: **[http://localhost](http://localhost)**
-
----
-
-## 🛠 Project Management
-
-Run `./fiesta.sh` at any time to access the management menu:
-
-| Option | Action | Description |
-| :--- | :--- | :--- |
-| **1** | **Setup/Install** | Initial project scaffolding, dependency installation, and DB seeding. |
-| **2** | **Update** | Pulls latest code from GitHub, updates dependencies, and runs migrations. |
-| **3** | **Rebuild** | Performs a hard reset: wipes the DB, recreates containers, and re-seeds data. |
-| **4** | **Start** | Boots up the Laravel Sail containers in the background. |
-| **5** | **Stop** | Gracefully stops all project containers. |
-| **6** | **Restart** | Restarts the Sail services. |
+### 4. Application Key generieren
+Erzeuge den Verschlüsselungsschlüssel für die Anwendung:
+```bash
+./vendor/bin/sail artisan key:generate
+```
+*Hinweis: Dies startet kurzzeitig einen Docker-Container via Sail.*
 
 ---
 
-## ⚙️ Technical Details
+## ▶️ Projekt starten & Ausführen
+
+Wir verwenden ein lokales Skript (`rebuild.sh`), um die Entwicklungsumgebung zu steuern.
+
+### Das Rebuild-Skript
+Das Skript führt einen kompletten Reset der Umgebung durch. Es erledigt folgende Aufgaben automatisch:
+1.  Stoppt laufende Sail-Container.
+2.  Startet die Container neu.
+3.  Setzt die Datenbank zurück und befüllt sie mit Testdaten (`migrate:fresh --seed`).
+4.  Baut die Frontend-Assets (CSS/JS).
+5.  Leert alle Caches (View, Config, Route, etc.).
+
+### Ausführen
+Mache das Skript ausführbar (falls noch nicht geschehen) und starte es:
+
+```bash
+chmod +x rebuild.sh
+./rebuild.sh
+```
+
+Sobald das Skript durchgelaufen ist, kannst du die Anwendung im Browser aufrufen:
+
+👉 **[http://localhost](http://localhost)**
+
+---
+
+## ⚙️ Technische Details
 
 - **Backend:** Laravel 12 (PHP 8.4)
 - **Frontend:** Tailwind CSS, Vite, Alpine.js
-- **Environment:** Laravel Sail (Docker)
-- **Database:** SQLite (Default for development) or PostgreSQL (Configurable in `.env`)
-
-### Troubleshooting "Breakout Detected"
-If you encounter a "container breakout detected" error during setup, simply wait a few seconds for Docker to fully initialize the mount points and run the command again. The script includes built-in wait times to minimize this.
-
----
-
-## 📄 License
-This project is open-source software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- **Umgebung:** Laravel Sail (Docker)
+- **Datenbank:** SQLite (Standard für Entwicklung)
