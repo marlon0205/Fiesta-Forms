@@ -82,7 +82,7 @@ class SurveyController extends Controller
                 'user_id' => Auth::id(),
                 'service_category_id' => $categoryIds['service_category_id'],
                 'product_category_id' => $categoryIds['product_category_id'],
-                'is_active' => true,
+                'is_active' => (bool) $validated['is_active'],
                 'duration_days' => 30, // Default, if not set
             ]);
 
@@ -109,6 +109,7 @@ class SurveyController extends Controller
                 'description' => $validated['description'] ?? '',
                 'service_category_id' => $categoryIds['service_category_id'],
                 'product_category_id' => $categoryIds['product_category_id'],
+                'is_active' => (bool) $validated['is_active'],
             ]);
 
             if ($hadVotes) {
@@ -199,6 +200,7 @@ class SurveyController extends Controller
         return [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'is_active' => 'required|boolean',
             'category' => [
                 'required',
                 'string',

@@ -1,4 +1,4 @@
-<form method="POST" action="{{ $action }}" x-data="surveyForm(@js($initialQuestions))" class="space-y-6">
+<form id="{{ $formId ?? 'survey-form' }}" method="POST" action="{{ $action }}" x-data="surveyForm(@js($initialQuestions))" class="space-y-6">
     @csrf
     @if (($method ?? 'POST') !== 'POST')
         @method($method)

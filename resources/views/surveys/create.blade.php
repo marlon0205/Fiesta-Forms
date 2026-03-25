@@ -2,16 +2,27 @@
 
 @section('title', 'Create Survey')
 
+@php
+    $initialIsActive = (bool) old('is_active', false);
+@endphp
+
 @section('content')
-<div class="max-w-5xl mx-auto py-4 fade-in">
+<div class="max-w-5xl mx-auto py-4 fade-in" x-data="{ isActive: @js($initialIsActive) }">
     <div class="mb-8 flex items-center justify-between gap-4">
         <div>
             <h2 class="text-3xl font-black text-slate-800 dark:text-white">Create Survey</h2>
             <p class="text-slate-500 dark:text-slate-400 font-medium">Set up a new form with questions and answer options.</p>
         </div>
-        <a href="{{ route('dashboard.admin') }}" class="px-4 py-2 rounded-xl bg-white/70 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold shadow hover:bg-white dark:hover:bg-slate-700 transition-colors">
-            Back to Admin
-        </a>
+        <div class="flex items-center gap-2">
+            <input type="hidden" name="is_active" form="survey-form" :value="isActive ? 1 : 0">
+            <button type="button" @click="isActive = !isActive" :class="isActive ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'" class="px-4 py-2 rounded-xl font-semibold transition-colors inline-flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full" :class="isActive ? 'bg-emerald-500' : 'bg-slate-400'"></span>
+                <span x-text="isActive ? 'active' : 'inactive'" class="uppercase tracking-wide text-xs font-black"></span>
+            </button>
+            <a href="{{ route('dashboard.admin') }}" class="px-4 py-2 rounded-xl bg-white/70 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold shadow hover:bg-white dark:hover:bg-slate-700 transition-colors">
+                Back to Admin
+            </a>
+        </div>
     </div>
 
     @if ($errors->any())
@@ -34,6 +45,7 @@
         'titleValue' => '',
         'descriptionValue' => '',
         'initialQuestions' => old('questions', [['text' => '', 'options' => ['', '']]]),
+        'formId' => 'survey-form',
     ])
 </div>
 @endsection
