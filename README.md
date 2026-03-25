@@ -25,7 +25,7 @@ Kopiere die Beispiel-Konfiguration in eine aktive `.env` Datei:
 ```bash
 cp .env.example .env
 ```
-Öffne die `.env` Datei und passe sie gegebenenfalls an. Die Standardkonfiguration (SQLite) ist für die lokale Entwicklung bereits optimiert.
+Öffne die `.env` Datei und passe sie gegebenenfalls an. Die Standardkonfiguration (SQLite) ist bereits vorkonfiguriert.
 
 ### 3. Abhängigkeiten installieren
 Lade die PHP-Abhängigkeiten (inklusive Laravel Sail) herunter:
@@ -38,32 +38,28 @@ Erzeuge den Verschlüsselungsschlüssel für die Anwendung:
 ```bash
 ./vendor/bin/sail artisan key:generate
 ```
-*Hinweis: Dies startet kurzzeitig einen Docker-Container via Sail.*
 
 ---
 
-## ▶️ Projekt starten & Ausführen
+## ▶️ Projekt-Verwaltung (Skripte)
 
-Wir verwenden ein lokales Skript (`rebuild.sh`), um die Entwicklungsumgebung zu steuern.
+Wir nutzen verschiedene Bash-Skripte, um die Docker-Umgebung und das Laravel-Setup zu steuern. Mache die Skripte vor der ersten Nutzung ausführbar: `chmod +x *.sh`.
 
-### Das Rebuild-Skript
-Das Skript führt einen kompletten Reset der Umgebung durch. Es erledigt folgende Aufgaben automatisch:
-1.  Stoppt laufende Sail-Container.
-2.  Startet die Container neu.
-3.  Setzt die Datenbank zurück und befüllt sie mit Testdaten (`migrate:fresh --seed`).
-4.  Baut die Frontend-Assets (CSS/JS).
-5.  Leert alle Caches (View, Config, Route, etc.).
+| Skript | Beschreibung | Wann nutzen? |
+| :--- | :--- | :--- |
+| **`./start.sh`** | Startet die Container und leert Caches. | Normales Weiterarbeiten (ohne Datenverlust). |
+| **`./stop.sh`** | Stoppt alle laufenden Container. | Wenn du Feierabend machst. |
+| **`./rebuild.sh`** | Reset der DB, Neustart der Container & **mit Testdaten** (`seed`). | Wenn du einen frischen Stand mit Beispieldaten brauchst. |
+| **`./start_empty.sh`** | Reset der DB, Neustart der Container & **ohne Testdaten**. | Wenn du eine komplett leere Datenbank zum Testen willst. |
 
-### Ausführen
-Mache das Skript ausführbar (falls noch nicht geschehen) und starte es:
-
+### Schnellstart nach der Einrichtung:
+Um das Projekt zum ersten Mal mit Testdaten zu befüllen und zu starten:
 ```bash
-chmod +x rebuild.sh
+chmod +x *.sh
 ./rebuild.sh
 ```
 
 Sobald das Skript durchgelaufen ist, kannst du die Anwendung im Browser aufrufen:
-
 👉 **[http://localhost](http://localhost)**
 
 ---
