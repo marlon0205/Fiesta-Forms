@@ -12,112 +12,63 @@ class SurveySeeder extends Seeder
 {
     public function run(): void
     {
-        // Wir holen uns den ersten User (Admin/Alex Jensen) als Ersteller
-        $user = User::first();
+        $user = User::query()->first() ?? User::factory()->create([
+            'name' => 'Alex Jensen',
+            'email' => 'alex@example.com',
+        ]);
 
-        if (!$user) {
-            // Fallback, falls kein User existiert
-            $user = User::factory()->create([
-                'name' => 'Alex Jensen',
-                'email' => 'alex@example.com',
+        $serviceCategoryIds = Service_Categories::query()->pluck('service_category_id')->all();
+        $productCategoryIds = Product_Categories::query()->pluck('product_category_id')->all();
+
+        for ($index = 1; $index <= 36; $index++) {
+            $serviceCategoryId = null;
+            $productCategoryId = null;
+
+            if (! empty($serviceCategoryIds) && fake()->boolean(50)) {
+                $serviceCategoryId = fake()->randomElement($serviceCategoryIds);
+            }
+
+            if (! empty($productCategoryIds) && fake()->boolean(50)) {
+                $productCategoryId = fake()->randomElement($productCategoryIds);
+            }
+
+            if (! $serviceCategoryId && ! $productCategoryId) {
+                if (! empty($serviceCategoryIds)) {
+                    $serviceCategoryId = fake()->randomElement($serviceCategoryIds);
+                } elseif (! empty($productCategoryIds)) {
+                    $productCategoryId = fake()->randomElement($productCategoryIds);
+                }
+            }
+
+            $survey = Survey::create([
+                'title' => fake()->unique()->sentence(4),
+                'description' => fake()->sentence(12),
+                'user_id' => $user->user_id,
+                'service_category_id' => $serviceCategoryId,
+                'product_category_id' => $productCategoryId,
+                'is_active' => fake()->boolean(70),
+                'duration_days' => fake()->numberBetween(7, 90),
+                'created_at' => now()->subDays(fake()->numberBetween(0, 120)),
+                'updated_at' => now(),
             ]);
+
+            $questionCount = fake()->numberBetween(2, 6);
+
+            for ($questionIndex = 1; $questionIndex <= $questionCount; $questionIndex++) {
+                $question = $survey->questions()->create([
+                    'question_text' => fake()->sentence(8),
+                ]);
+
+                $optionCount = fake()->numberBetween(2, 5);
+
+                for ($optionIndex = 1; $optionIndex <= $optionCount; $optionIndex++) {
+                    $question->answerOptions()->create([
+                        'option_text' => fake()->words(fake()->numberBetween(1, 4), true),
+                    ]);
+                }
+            }
         }
 
-        // Kategorien laden
-        $productCat = Product_Categories::where('name', 'Product Feedback')->first();
-        $hrCat = Service_Categories::where('name', 'HR & Culture')->first();
-        $itCat = Product_Categories::where('name', 'IT Support')->first();
-
-        // 1. Umfrage: Q3 Product Roadmap
-        $survey1 = Survey::create([
-            'title' => 'Q3 Product Roadmap',
-            'description' => 'Help us prioritize features for the upcoming quarter.',
-            'user_id' => $user->user_id,
-            'product_category_id' => $productCat?->product_category_id,
-            'is_active' => true,
-            'duration_days' => 30
-        ]);
-
-        $q1 = $survey1->questions()->create(['question_text' => 'Which feature is most critical for you?']);
-        $q1->answerOptions()->createMany([
-            ['option_text' => 'Dark Mode'],
-            ['option_text' => 'API Access'],
-            ['option_text' => 'Mobile App']
-        ]);
-
-        $q2 = $survey1->questions()->create(['question_text' => 'How satisfied are you with the current speed?']);
-        $q2->answerOptions()->createMany([
-            ['option_text' => 'Very Satisfied'],
-            ['option_text' => 'Neutral'],
-            ['option_text' => 'Dissatisfied']
-        ]);
-
-        // 2. Umfrage: Cafeteria Menu (HR)
-        $survey2 = Survey::create([
-            'title' => 'Cafeteria Menu Update',
-            'description' => 'Voting for new vendor options for next month.',
-            'user_id' => $user->user_id,
-            'service_category_id' => $hrCat?->service_category_id,
-            'is_active' => false,
-            'duration_days' => 14
-        ]);
-
-        $q3 = $survey2->questions()->create(['question_text' => 'Preferred Cuisine?']);
-        $q3->answerOptions()->createMany([
-            ['option_text' => 'Italian'],
-            ['option_text' => 'Asian'],
-            ['option_text' => 'Vegan/Healthy']
-        ]);
-
-        // 3. Umfrage: IT Ticket Experience (IT)
-        $survey3 = Survey::create([
-            'title' => 'IT Ticket Experience',
-            'description' => 'Rate your recent helpdesk support quality.',
-            'user_id' => $user->user_id,
-            'product_category_id' => $itCat?->product_category_id,
-            'is_active' => true,
-            'duration_days' => 90
-        ]);
-
-        $q4 = $survey3->questions()->create(['question_text' => 'Was your issue resolved?']);
-        $q4->answerOptions()->createMany([
-            ['option_text' => 'Yes, quickly'],
-            ['option_text' => 'Yes, but took time'],
-            ['option_text' => 'No']
-        ]);
-
-        // 3. Umfrage: IT Ticket Experience (IT)
-        $survey4 = Survey::create([
-            'title' => 'Hasst du auch Berufsschule?',
-            'description' => 'Selbsterklärend.',
-            'user_id' => $user->user_id,
-            'product_category_id' => $itCat?->product_category_id,
-            'is_active' => true,
-            'duration_days' => 90
-        ]);
-
-        $q5 = $survey4->questions()->create(['question_text' => 'Was your issue resolved?']);
-        $q5->answerOptions()->createMany([
-            ['option_text' => 'Yes, quickly'],
-            ['option_text' => 'Yes, but took time'],
-            ['option_text' => 'No']
-        ]);
-
-        // 3. Umfrage: IT Ticket Experience (IT)
-        $survey5 = Survey::create([
-            'title' => 'Hasst du auch Berufsschule?',
-            'description' => 'Selbsterklärend.',
-            'user_id' => $user->user_id,
-            'product_category_id' => $itCat?->product_category_id,
-            'is_active' => true,
-            'duration_days' => 90
-        ]);
-
-        $q6 = $survey5->questions()->create(['question_text' => 'Was your issue resolved?']);
-        $q6->answerOptions()->createMany([
-            ['option_text' => 'Yes, quickly'],
-            ['option_text' => 'Yes, but took time'],
-            ['option_text' => 'No']
-        ]);
+        fake()->unique(true);
     }
 }
