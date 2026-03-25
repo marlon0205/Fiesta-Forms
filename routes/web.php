@@ -1,8 +1,8 @@
 <?php
 
+use App\Http\Controllers\API\ApiSurveyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SurveyController;
-use App\Http\Controllers\API\ApiSurveyController;
 use Illuminate\Support\Facades\Route;
 
 // Redirect root to dashboard
@@ -47,6 +47,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile-edit', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/survey/create', [SurveyController::class, 'createView'])->name('survey.create');
+    Route::post('/survey', [SurveyController::class, 'store'])->name('survey.store');
+    Route::get('/survey/edit/{survey}', [SurveyController::class, 'editView'])->name('survey.edit');
+    Route::patch('/survey/{survey}', [SurveyController::class, 'update'])->name('survey.update');
+});
+
 // Saves a new survey (POST)
 Route::post('/surveys', [SurveyController::class, 'store'])
     ->middleware(['auth', 'verified'])
@@ -58,17 +65,13 @@ Route::get('/testing/surveys/{survey}', [SurveyController::class, 'showView'])
     ->middleware(['auth']) // Optional: Nur für eingeloggte User
     ->name('surveys.show');
 
-
-
 /*
  *
  * REST-API Endpoints
  *
  */
 
-//Rest-API Endpoint for Surveys
+// Rest-API Endpoint for Surveys
 Route::get('/api/surveys/{survey}', [ApiSurveyController::class, 'show']);
-
-
 
 require __DIR__.'/auth.php';

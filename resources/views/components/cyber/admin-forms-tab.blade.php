@@ -50,7 +50,7 @@
                     </td>
                     <td class="py-4 pr-4 text-right">
                         <div class="flex items-center justify-end gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
-                            <button onclick="showToast('Edit feature coming soon')" class="w-8 h-8 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-400 transition-colors">
+                            <button onclick="window.location.href='{{ route('admin.survey.edit', $survey->survey_id) }}'" class="w-8 h-8 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-400 transition-colors">
                                 <span class="material-symbols-outlined text-[18px]">edit</span>
                             </button>
                             <form action="{{ route('dashboard.admin.survey.destroy', $survey->survey_id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this survey? This action cannot be undone.');">

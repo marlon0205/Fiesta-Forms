@@ -2,22 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Survey;
-use App\Models\Service_Categories;
 use App\Models\Product_Categories;
+use App\Models\Service_Categories;
+use App\Models\Survey;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
-class SurveyController extends Controller {
-
-
+class SurveyController extends Controller
+{
     /**
      * Zeigt eine spezifische Umfrage als HTML an (für Blade).
      * GET /surveys/{survey}
      */
-    public function showView(Survey $survey) {
+    public function showView(Survey $survey)
+    {
         // Lade die Beziehungen
         $survey->load(['questions.answerOptions', 'user', 'serviceCategory', 'productCategory']);
 
@@ -26,20 +27,38 @@ class SurveyController extends Controller {
     }
 
     /**
+     * Shows the survey creation page.
+     */
+    public function createView()
+    {
+        return view('surveys.create', [
+            'categories' => $this->categoryNames(),
+        ]);
+    }
+
+    /**
+     * Zeigt eine spezifische Umfrage als HTML an (für Blade).
+     * GET admin/survey/{survey}
+     */
+    public function editView(Survey $survey)
+    {
+        // Lade die Beziehungen
+        $survey->load(['questions.answerOptions', 'user', 'serviceCategory', 'productCategory']);
+
+        // Gib die Blade-View zurück und übergebe die Variable $survey
+        return view('surveys.edit', [
+            'survey' => $survey,
+            'categories' => $this->categoryNames(),
+        ]);
+    }
+
+    /**
      * Speichert eine neue Umfrage inkl. Fragen und Optionen.
      * POST /surveys
      */
-    public function store(Request $request) {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'category' => 'required|string',
-            'questions' => 'required|array|min:1',
-            'questions.*.text' => 'required|string|max:255',
-            'questions.*.options' => 'required|array|min:2',
-            'questions.*.options.*' => 'required|string|max:255',
-        ]);
-
+    public function store(Request $request)
+    {
+        $validated = $request->validate($this->surveyValidationRules());
 
         /**
          * DB::transaction explanation: https://laravel.com/docs/12.x/database#database-transactions
@@ -52,45 +71,64 @@ class SurveyController extends Controller {
             /**
              * search for the ID based on the name of the category
              */
-            $serviceCat = Service_Categories::where('name', $validated['category'] ?? '')->first();
-            $productCat = Product_Categories::where('name', $validated['category'] ?? '')->first();
+            $categoryIds = $this->resolveCategoryIds($validated['category']);
 
             /**
              * Create the survey
              */
-            $survey = Auth::user()->surveys()->create([
+            $survey = Survey::create([
                 'title' => $validated['title'],
                 'description' => $validated['description'] ?? '',
-                'service_category_id' => $serviceCat?->service_category_id,
-                'product_category_id' => $productCat?->product_category_id,
+                'user_id' => Auth::id(),
+                'service_category_id' => $categoryIds['service_category_id'],
+                'product_category_id' => $categoryIds['product_category_id'],
                 'is_active' => true,
                 'duration_days' => 30, // Default, if not set
             ]);
 
-            /**
-             * Create the questions and answer options
-             *
-             * Iterate through each questions and the answer options.
-             * questions will only be saved if the question has answer options.
-             */
-            foreach ($validated['questions'] as $qData) {
-                $question = $survey->questions()->create([
-                    'question_text' => $qData['text']
-                ]);
-
-                foreach ($qData['options'] as $optText) {
-                    // Only save the question if it has answer options
-                    if (filled($optText)) {
-                        /* Check why option_text is guarded. unguarding will make it fillable in Questions.php, i dont know why lol
-                         * Edit: False Positive. Intellij checks for 'option_text' in Questions because the chain started there.
-                         */
-                        $question->answerOptions()->create(['option_text' => $optText]);
-                    }
-                }
-            }
+            $this->createQuestionsAndOptions($survey, $validated['questions']);
         });
 
-        return redirect()->route('dashboard.home')->with('success', 'Mission launched successfully!');
+        return redirect()->route('dashboard.admin')->with('success', 'Survey created successfully.');
+    }
+
+    /**
+     * Updates an existing survey including questions and options.
+     */
+    public function update(Request $request, Survey $survey)
+    {
+        $validated = $request->validate($this->surveyValidationRules());
+
+        $hadVotes = $survey->votes()->exists();
+
+        DB::transaction(function () use ($validated, $survey, $hadVotes) {
+            $categoryIds = $this->resolveCategoryIds($validated['category']);
+
+            $survey->update([
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? '',
+                'service_category_id' => $categoryIds['service_category_id'],
+                'product_category_id' => $categoryIds['product_category_id'],
+            ]);
+
+            if ($hadVotes) {
+                $survey->votes()->delete();
+            }
+
+            foreach ($survey->questions as $question) {
+                $question->answerOptions()->delete();
+            }
+
+            $survey->questions()->delete();
+
+            $this->createQuestionsAndOptions($survey, $validated['questions']);
+        });
+
+        $successMessage = $hadVotes
+            ? 'Survey updated. Existing votes were reset because questions changed.'
+            : 'Survey updated successfully.';
+
+        return redirect()->route('dashboard.admin')->with('success', $successMessage);
     }
 
     /**
@@ -134,10 +172,74 @@ class SurveyController extends Controller {
             return redirect()->route('dashboard.admin')
                 ->with('success', "Survey '{$surveyTitle}' has been successfully deleted");
         } catch (\Exception $e) {
-            Log::error('Failed to delete survey: ' . $e->getMessage());
+            Log::error('Failed to delete survey: '.$e->getMessage());
+
             return redirect()->route('dashboard.admin')
-                ->with('error', 'Failed to delete survey: ' . $e->getMessage());
+                ->with('error', 'Failed to delete survey: '.$e->getMessage());
         }
     }
 
+    /**
+     * Returns all available category names from both category tables.
+     */
+    private function categoryNames()
+    {
+        return Service_Categories::query()->pluck('name')
+            ->merge(Product_Categories::query()->pluck('name'))
+            ->unique()
+            ->sort()
+            ->values();
+    }
+
+    /**
+     * Validation rules for survey create and update.
+     */
+    private function surveyValidationRules(): array
+    {
+        return [
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'category' => [
+                'required',
+                'string',
+                Rule::in($this->categoryNames()->all()),
+            ],
+            'questions' => 'required|array|min:1',
+            'questions.*.text' => 'required|string|max:255',
+            'questions.*.options' => 'required|array|min:2',
+            'questions.*.options.*' => 'required|string|max:255',
+        ];
+    }
+
+    /**
+     * Resolves category IDs by a shared category name.
+     */
+    private function resolveCategoryIds(string $categoryName): array
+    {
+        $serviceCategory = Service_Categories::where('name', $categoryName)->first();
+        $productCategory = Product_Categories::where('name', $categoryName)->first();
+
+        return [
+            'service_category_id' => $serviceCategory?->service_category_id,
+            'product_category_id' => $productCategory?->product_category_id,
+        ];
+    }
+
+    /**
+     * Creates all questions and their options for the given survey.
+     */
+    private function createQuestionsAndOptions(Survey $survey, array $questions): void
+    {
+        foreach ($questions as $questionData) {
+            $question = $survey->questions()->create([
+                'question_text' => $questionData['text'],
+            ]);
+
+            foreach ($questionData['options'] as $optionText) {
+                $question->answerOptions()->create([
+                    'option_text' => $optionText,
+                ]);
+            }
+        }
+    }
 }
