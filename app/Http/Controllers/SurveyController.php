@@ -137,10 +137,52 @@ class SurveyController extends Controller
      */
     public function index()
     {
-        $surveys = Survey::with(['user', 'serviceCategory', 'productCategory', 'votes'])
-            ->withCount('votes')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $sort = request('sort', 'created');
+        $direction = request('direction', 'desc') === 'asc' ? 'asc' : 'desc';
+
+        $allowedSorts = [
+            'title',
+            'questions',
+            'responses',
+            'last_response',
+            'status',
+            'created',
+        ];
+
+        if (! in_array($sort, $allowedSorts, true)) {
+            $sort = 'created';
+        }
+
+        $surveysQuery = Survey::with(['user', 'serviceCategory', 'productCategory'])
+            ->withCount(['votes', 'questions'])
+            ->withMax('votes as last_response_at', 'created_at');
+
+        switch ($sort) {
+            case 'title':
+                $surveysQuery->orderBy('title', $direction);
+                break;
+            case 'questions':
+                $surveysQuery->orderBy('questions_count', $direction);
+                break;
+            case 'responses':
+                $surveysQuery->orderBy('votes_count', $direction);
+                break;
+            case 'last_response':
+                $surveysQuery->orderBy('last_response_at', $direction);
+                break;
+            case 'status':
+                $surveysQuery->orderBy('is_active', $direction);
+                break;
+            case 'created':
+            default:
+                $surveysQuery->orderBy('created_at', $direction);
+                break;
+        }
+
+        $surveys = $surveysQuery
+            ->orderBy('survey_id', 'desc')
+            ->paginate(15)
+            ->withQueryString();
 
         return view('cyber.admin', compact('surveys'));
     }
