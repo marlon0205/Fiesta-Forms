@@ -151,6 +151,7 @@ class SurveyController extends Controller {
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'category' => 'required|string',
+            'is_active' => 'required|boolean',
             'questions' => 'required|array|min:1',
             'questions.*.text' => 'required|string|max:255',
             'questions.*.options' => 'required|array|min:2',
