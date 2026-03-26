@@ -4,19 +4,35 @@
 
 @section('content')
 @php
-// Mock user data
-$user = auth()->user() ?? (object)[
-    'name' => 'Alex Jensen',
-    'email' => 'alex.jensen@client.com',
-    'role' => 'Customer'
-];
-
-$badges = ['Early Adopter', 'Top Voter', 'Feedback Guru'];
-$points = 1250;
-$votes = 42;
+    $user = auth()->user();
+    $badges = ['Early Adopter', 'Top Voter', 'Feedback Guru'];
+    $points = 1250;
+    $votesCount = $user->votes()->count();
 @endphp
 
 <div class="max-w-4xl mx-auto py-8 fade-in">
+    @if (session('status') === 'profile-updated')
+        <div class="mb-4 p-4 bg-green-500/10 border border-green-500/50 text-green-500 rounded-xl text-sm font-bold">
+            Profile updated successfully.
+        </div>
+    @endif
+
+    @if (session('status') === 'password-updated')
+        <div class="mb-4 p-4 bg-green-500/10 border border-green-500/50 text-green-500 rounded-xl text-sm font-bold">
+            Password updated successfully.
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="mb-4 p-4 bg-rose-500/10 border border-rose-500/50 text-rose-500 rounded-xl text-sm font-bold">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="glass-panel dark:bg-slate-800/60 rounded-[2rem] shadow-2xl overflow-hidden border-0">
         <!-- Banner -->
         <div class="h-40 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 relative overflow-hidden">
@@ -39,7 +55,6 @@ $votes = 42;
                     </div>
                 </div>
                 <div class="hidden sm:flex gap-3">
-                    <button onclick="showToast('Edit profile feature coming soon')" class="glass-button bg-white/50 dark:bg-slate-700/50 hover:bg-white dark:hover:bg-slate-700 text-slate-800 dark:text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all">Edit Profile</button>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="glass-button bg-rose-500 dark:bg-rose-600/50 hover:bg-rose-500 dark:hover:bg-rose-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all">Logout</button>
@@ -71,36 +86,65 @@ $votes = 42;
                     </div>
 
                     <div>
-                        <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">Account</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Display Name</label>
-                                <input type="text" value="{{ $user->name }}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                        <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">Account Settings</h3>
+                        <form method="post" action="{{ route('profile.update') }}" class="space-y-6">
+                            @csrf
+                            @method('patch')
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Display Name</label>
+                                    <input type="text" name="name" value="{{ old('name', $user->name) }}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
+                                    <input type="email" name="email" value="{{ old('email', $user->email) }}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                </div>
                             </div>
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-all">Save Changes</button>
+                        </form>
+
+                        <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+                        <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">Update Password</h3>
+                        <form method="post" action="{{ route('password.update') }}" class="space-y-4">
+                            @csrf
+                            @method('put')
                             <div class="space-y-1">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Password</label>
-                                <button onclick="showToast('Password change feature coming soon')" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-500 rounded-xl px-4 py-3 text-sm flex justify-between items-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                                    <span>••••••••••••</span>
-                                    <span class="text-xs font-bold text-indigo-500">Update</span>
-                                </button>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Password</label>
+                                <input type="password" name="current_password" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
                             </div>
-                        </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">New Password</label>
+                                    <input type="password" name="password" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Confirm Password</label>
+                                    <input type="password" name="password_confirmation" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                </div>
+                            </div>
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-all">Update Password</button>
+                        </form>
                     </div>
                 </div>
 
                 <div class="space-y-6">
                     <div class="glass-card bg-indigo-500/10 dark:bg-indigo-500/20 border-indigo-200 dark:border-indigo-800 rounded-2xl p-6 text-center">
-                        <div class="text-5xl font-black text-indigo-600 dark:text-indigo-400 mb-2">{{ $votes }}</div>
+                        <div class="text-5xl font-black text-indigo-600 dark:text-indigo-400 mb-2">{{ $votesCount }}</div>
                         <div class="text-xs font-bold text-indigo-400 dark:text-indigo-300 uppercase tracking-widest">Surveys Taken</div>
                     </div>
 
                     <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
                         <p class="text-xs text-slate-400 font-bold uppercase mb-4">Membership</p>
                         <div class="text-sm text-slate-600 dark:text-slate-300 space-y-2 font-medium">
-                            <p>Joined Oct 2024</p>
-                            <p>Last active: Now</p>
+                            <p>Joined {{ $user->created_at->format('M Y') }}</p>
+                            <p>Last active: {{ \Carbon\Carbon::parse($user->last_activity ?? now())->diffForHumans() }}</p>
                         </div>
-                        <button onclick="showToast('Account deletion requires admin approval')" class="mt-6 w-full py-2 text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors">Delete Account</button>
+                        <form method="post" action="{{ route('profile.destroy') }}" onsubmit="return confirm('Are you sure you want to delete your account?');">
+                            @csrf
+                            @method('delete')
+                            <button type="submit" class="mt-6 w-full py-2 text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors">Delete Account</button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -108,4 +152,3 @@ $votes = 42;
     </div>
 </div>
 @endsection
-

@@ -29,9 +29,7 @@ Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')
     Route::get('/admin', [SurveyController::class, 'index'])->name('admin');
     Route::delete('/admin/survey/{survey}', [SurveyController::class, 'destroy'])->name('admin.survey.destroy');
 
-    Route::get('/profile', function () {
-        return view('cyber.profile');
-    })->name('profile');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
 });
 
 // Explore page
@@ -43,6 +41,7 @@ Route::get('/explore', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/profile-edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile-edit', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/password-update', [ProfileController::class, 'updatePassword'])->name('password.update');
     Route::delete('/profile-edit', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
