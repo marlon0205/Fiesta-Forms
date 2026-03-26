@@ -10,9 +10,9 @@
             <p class="text-slate-500 dark:text-slate-400 font-medium">Manage surveys, users, and integrations.</p>
         </div>
         <div class="flex gap-3">
-            <button onclick="showToast('Create form feature coming soon')" class="bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:scale-105 transition-all flex items-center gap-2">
+            <a href="{{ route('admin.survey.create') }}" class="bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:scale-105 transition-all flex items-center gap-2">
                 <span class="material-symbols-outlined text-lg">add_circle</span> New Form
-            </button>
+            </a>
         </div>
     </div>
 
@@ -40,4 +40,3 @@
     });
 </script>
 @endpush
-
