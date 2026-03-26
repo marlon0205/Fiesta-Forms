@@ -13,8 +13,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
-class SurveyController extends Controller
-{
 class SurveyController extends Controller {
 
     /**
@@ -58,10 +56,11 @@ class SurveyController extends Controller {
     /**
      * Store a new vote for the survey.
      */
-    public function showView(Survey $survey)
-    {
+    public function showView(Survey $survey) {
         // Lade die Beziehungen
         $survey->load(['questions.answerOptions', 'user', 'serviceCategory', 'productCategory']);
+    }
+
     public function vote(Request $request, Survey $survey){
         // Check if user has already voted
         if ($survey->votes()->where('user_id', Auth::id())->exists()) {
@@ -116,20 +115,13 @@ class SurveyController extends Controller {
     /**
      * Shows the survey creation page.
      */
+    /**
+     * Shows the survey creation page.
+     */
     public function createView()
     {
         return view('surveys.create', [
             'categories' => $this->categoryNames(),
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'category' => 'required|string',
-            'questions' => 'required|array|min:1',
-            'questions.*.text' => 'required|string|max:255',
-            'questions.*.options' => 'required|array|min:2',
-            'questions.*.options.*' => 'required|string|max:255',
         ]);
     }
 
@@ -155,7 +147,16 @@ class SurveyController extends Controller {
      */
     public function store(Request $request)
     {
-        $validated = $request->validate($this->surveyValidationRules());
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'category' => 'required|string',
+            'questions' => 'required|array|min:1',
+            'questions.*.text' => 'required|string|max:255',
+            'questions.*.options' => 'required|array|min:2',
+            'questions.*.options.*' => 'required|string|max:255',
+        ]);
+
 
         /**
          * DB::transaction explanation: https://laravel.com/docs/12.x/database#database-transactions
@@ -167,23 +168,21 @@ class SurveyController extends Controller {
             /**
              * search for the ID based on the name of the category
              */
-            $categoryIds = $this->resolveCategoryIds($validated['category']);
+            $serviceCat = Service_Categories::where('name', $validated['category'] ?? '')->first();
+            $productCat = Product_Categories::where('name', $validated['category'] ?? '')->first();
 
             /**
              * Create the survey
              */
-            $survey = Survey::create([
+            $survey = Auth::user()->surveys()->create([
                 'title' => $validated['title'],
                 'description' => $validated['description'] ?? '',
-                'user_id' => Auth::id(),
-                'service_category_id' => $categoryIds['service_category_id'],
-                'product_category_id' => $categoryIds['product_category_id'],
+                'service_category_id' => $serviceCat?->service_category_id,
+                'product_category_id' => $productCat?->product_category_id,
                 'is_active' => (bool) $validated['is_active'],
                 'duration_days' => 30, // Default, if not set
             ]);
 
-            $this->createQuestionsAndOptions($survey, $validated['questions']);
-        });
             /**
              * Create the questions and answer options
              *
@@ -195,7 +194,19 @@ class SurveyController extends Controller {
                     'question_text' => $qData['text'],
                 ]);
 
-        return redirect()->route('dashboard.admin')->with('success', 'Survey created successfully.');
+                foreach ($qData['options'] as $optText) {
+                    // Only save the question if it has answer options
+                    if (filled($optText)) {
+                        /* Check why option_text is guarded. unguarding will make it fillable in Questions.php, i dont know why lol
+                         * Edit: False Positive. Intellij checks for 'option_text' in Questions because the chain started there.
+                         */
+                        $question->answerOptions()->create(['option_text' => $optText]);
+                    }
+                }
+            }
+        });
+
+        return redirect()->route('dashboard.home')->with('success', 'Mission launched successfully!');
     }
 
     /**
