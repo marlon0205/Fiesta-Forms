@@ -20,9 +20,8 @@ Route::prefix('dashboard')->name('dashboard.')->group(function () {
         return view('cyber.explore');
     })->name('explore');
 
-    Route::get('/form/{id}', function ($id) {
-        return view('cyber.form-detail', ['id' => $id]);
-    })->name('form-detail');
+    Route::get('/form/{survey}', [SurveyController::class, 'show'])->name('form-detail');
+    Route::post('/form/{survey}/vote', [SurveyController::class, 'vote'])->middleware('auth')->name('form.vote');
 });
 
 // Protected Cyber Dashboard Routes (auth required)

@@ -17,11 +17,13 @@ class CategorySeeder extends Seeder
         }
 
         // Product Categories
-        // "IT Support" packen wir hier rein, damit es verteilt ist, 
-        // im Frontend werden eh beide Tabellen gemerged.
         $products = ['Product Feedback', 'IT Support'];
         foreach ($products as $product) {
             Product_Categories::create(['name' => $product]);
         }
+
+        // 5 random words for categories
+        Product_Categories::factory(5)->create();
+        Service_Categories::factory(5)->create();
     }
 }

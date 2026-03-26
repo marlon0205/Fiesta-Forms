@@ -14,7 +14,6 @@ class Product_CategoriesFactory extends Factory
     {
         return [
             'name' => $this->faker->unique()->word,
-            // KORREKTUR: 'description' entfernt, da Spalte nicht existiert
         ];
     }
 }

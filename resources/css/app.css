@@ -1,4 +1,6 @@
 @import './material-symbols.css';
+@import './outfit.css';
+@import './figtree.css';
 
 @tailwind base;
 @tailwind components;
