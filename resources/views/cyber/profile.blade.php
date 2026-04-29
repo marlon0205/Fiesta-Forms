@@ -4,10 +4,14 @@
 
 @section('content')
 @php
-    $user = auth()->user();
     $badges = ['Early Adopter', 'Top Voter', 'Feedback Guru'];
     $points = 1250;
-    $votesCount = $user->votes()->count();
+    $canEditProfile = $canEditProfile ?? auth()->id() === $user->user_id;
+    $votesCount = $user->votes_count ?? $user->votes()->count();
+    $lastActivity = $lastActivityAt
+        ? \Carbon\Carbon::createFromTimestamp($lastActivityAt)
+        : null;
+    $roleNames = $user->roles?->pluck('name')->join(', ');
 @endphp
 
 <div class="max-w-4xl mx-auto py-8 fade-in">
@@ -54,12 +58,14 @@
                         <p class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ $user->email }}</p>
                     </div>
                 </div>
-                <div class="hidden sm:flex gap-3">
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="glass-button bg-rose-500 dark:bg-rose-600/50 hover:bg-rose-500 dark:hover:bg-rose-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all">Logout</button>
-                    </form>
-                </div>
+                @if($canEditProfile)
+                    <div class="hidden sm:flex gap-3">
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="glass-button bg-rose-500 dark:bg-rose-600/50 hover:bg-rose-500 dark:hover:bg-rose-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all">Logout</button>
+                        </form>
+                    </div>
+                @endif
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -85,47 +91,71 @@
                         </div>
                     </div>
 
-                    <div>
-                        <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">Account Settings</h3>
-                        <form method="post" action="{{ route('profile.update') }}" class="space-y-6">
-                            @csrf
-                            @method('patch')
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Display Name</label>
-                                    <input type="text" name="name" value="{{ old('name', $user->name) }}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                    @if($canEditProfile)
+                        <div>
+                            <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">Account Settings</h3>
+                            <form method="post" action="{{ route('profile.update') }}" class="space-y-6">
+                                @csrf
+                                @method('patch')
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div class="space-y-1">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Display Name</label>
+                                        <input type="text" name="name" value="{{ old('name', $user->name) }}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
+                                        <input type="email" name="email" value="{{ old('email', $user->email) }}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                    </div>
                                 </div>
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
-                                    <input type="email" name="email" value="{{ old('email', $user->email) }}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
-                                </div>
-                            </div>
-                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-all">Save Changes</button>
-                        </form>
+                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-all">Save Changes</button>
+                            </form>
 
-                        <hr class="my-8 border-slate-200 dark:border-slate-700">
+                            <hr class="my-8 border-slate-200 dark:border-slate-700">
 
-                        <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">Update Password</h3>
-                        <form method="post" action="{{ route('password.update') }}" class="space-y-4">
-                            @csrf
-                            @method('put')
-                            <div class="space-y-1">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Password</label>
-                                <input type="password" name="current_password" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
-                            </div>
+                            <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">Update Password</h3>
+                            <form method="post" action="{{ route('password.update') }}" class="space-y-4">
+                                @csrf
+                                @method('put')
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Password</label>
+                                    <input type="password" name="current_password" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div class="space-y-1">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">New Password</label>
+                                        <input type="password" name="password" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Confirm Password</label>
+                                        <input type="password" name="password_confirmation" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                    </div>
+                                </div>
+                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-all">Update Password</button>
+                            </form>
+                        </div>
+                    @else
+                        <div>
+                            <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">Profile Details</h3>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">New Password</label>
-                                    <input type="password" name="password" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Username</div>
+                                    <div class="font-bold text-slate-900 dark:text-white">{{ $user->name }}</div>
                                 </div>
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Confirm Password</label>
-                                    <input type="password" name="password_confirmation" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email Address</div>
+                                    <div class="font-bold text-slate-900 dark:text-white">{{ $user->email }}</div>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Role</div>
+                                    <div class="font-bold text-slate-900 dark:text-white">{{ $roleNames ?: 'No role' }}</div>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status</div>
+                                    <div class="font-bold text-slate-900 dark:text-white">{{ $user->is_active ? 'Active' : 'Inactive' }}</div>
                                 </div>
                             </div>
-                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-all">Update Password</button>
-                        </form>
-                    </div>
+                        </div>
+                    @endif
                 </div>
 
                 <div class="space-y-6">
@@ -138,13 +168,15 @@
                         <p class="text-xs text-slate-400 font-bold uppercase mb-4">Membership</p>
                         <div class="text-sm text-slate-600 dark:text-slate-300 space-y-2 font-medium">
                             <p>Joined {{ $user->created_at->format('M Y') }}</p>
-                            <p>Last active: {{ \Carbon\Carbon::parse($user->last_activity ?? now())->diffForHumans() }}</p>
+                            <p>Last active: {{ $lastActivity ? $lastActivity->diffForHumans() : 'No recent activity' }}</p>
                         </div>
-                        <form method="post" action="{{ route('profile.destroy') }}" onsubmit="return confirm('Are you sure you want to delete your account?');">
-                            @csrf
-                            @method('delete')
-                            <button type="submit" class="mt-6 w-full py-2 text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors">Delete Account</button>
-                        </form>
+                        @if($canEditProfile)
+                            <form method="post" action="{{ route('profile.destroy') }}" onsubmit="return confirm('Are you sure you want to delete your account?');">
+                                @csrf
+                                @method('delete')
+                                <button type="submit" class="mt-6 w-full py-2 text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors">Delete Account</button>
+                            </form>
+                        @endif
                     </div>
                 </div>
             </div>

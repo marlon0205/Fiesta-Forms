@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\Rules\Password;
@@ -18,8 +20,32 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user = $request->user()->load('roles')->loadCount('votes');
+        $lastActivityAt = DB::table('sessions')
+            ->where('user_id', $user->user_id)
+            ->max('last_activity');
+
         return view('cyber.profile', [
-            'user' => $request->user(),
+            'user' => $user,
+            'canEditProfile' => true,
+            'lastActivityAt' => $lastActivityAt,
+        ]);
+    }
+
+    /**
+     * Display a user's profile for admins.
+     */
+    public function show(User $user): View
+    {
+        $user->load(['roles'])->loadCount('votes');
+        $lastActivityAt = DB::table('sessions')
+            ->where('user_id', $user->user_id)
+            ->max('last_activity');
+
+        return view('cyber.profile', [
+            'user' => $user,
+            'canEditProfile' => false,
+            'lastActivityAt' => $lastActivityAt,
         ]);
     }
 

@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\API\ApiSurveyController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\API\ApiSurveyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SurveyController;
 use Illuminate\Support\Facades\Route;
@@ -51,6 +51,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/survey', [SurveyController::class, 'store'])->name('survey.store');
     Route::get('/survey/edit/{survey}', [SurveyController::class, 'editView'])->name('survey.edit');
     Route::patch('/survey/{survey}', [SurveyController::class, 'update'])->name('survey.update');
+    Route::get('/user/{user}/profile', [ProfileController::class, 'show'])->name('user.profile');
 });
 
 // Saves a new survey (POST)
