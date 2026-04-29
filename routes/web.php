@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\ApiSurveyController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SurveyController;
 use Illuminate\Support\Facades\Route;
@@ -26,7 +27,7 @@ Route::prefix('dashboard')->name('dashboard.')->group(function () {
 
 // Protected Cyber Dashboard Routes (auth required)
 Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')->group(function () {
-    Route::get('/admin', [SurveyController::class, 'index'])->name('admin');
+    Route::get('/admin', [AdminController::class, 'index'])->name('admin');
     Route::delete('/admin/survey/{survey}', [SurveyController::class, 'destroy'])->name('admin.survey.destroy');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
