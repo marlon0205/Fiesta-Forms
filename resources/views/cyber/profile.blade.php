@@ -7,11 +7,16 @@
     $badges = ['Early Adopter', 'Top Voter', 'Feedback Guru'];
     $points = 1250;
     $canEditProfile = $canEditProfile ?? auth()->id() === $user->user_id;
+    $isAdminEditingUser = $isAdminEditingUser ?? false;
+    $profileUpdateRoute = $isAdminEditingUser ? route('admin.user.update', $user) : route('profile.update');
+    $passwordUpdateRoute = $isAdminEditingUser ? route('admin.user.password.update', $user) : route('password.update');
+    $destroyRoute = $isAdminEditingUser ? route('admin.user.destroy', $user) : route('profile.destroy');
     $votesCount = $user->votes_count ?? $user->votes()->count();
     $lastActivity = $lastActivityAt
         ? \Carbon\Carbon::createFromTimestamp($lastActivityAt)
         : null;
     $roleNames = $user->roles?->pluck('name')->join(', ');
+    $currentRole = $user->roles?->pluck('name')->first();
 @endphp
 
 <div class="max-w-4xl mx-auto py-8 fade-in">
@@ -37,6 +42,15 @@
         </div>
     @endif
 
+    @if($isAdminEditingUser)
+        <div class="mb-4">
+            <a href="{{ route('dashboard.admin', ['tab' => 'users']) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold shadow hover:bg-white dark:hover:bg-slate-700 transition-colors">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                Back to Users
+            </a>
+        </div>
+    @endif
+
     <div class="glass-panel dark:bg-slate-800/60 rounded-[2rem] shadow-2xl overflow-hidden border-0">
         <!-- Banner -->
         <div class="h-40 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 relative overflow-hidden">
@@ -54,11 +68,11 @@
                         </div>
                     </div>
                     <div class="mb-2">
-                        <h1 class="text-3xl font-black text-slate-900 dark:text-white">{{ $user->name }}</h1>
+                        <h1 class="text-3xl font-black text-slate-900 dark:text-white">{{ $isAdminEditingUser ? 'Edit '.$user->name : $user->name }}</h1>
                         <p class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ $user->email }}</p>
                     </div>
                 </div>
-                @if($canEditProfile)
+                @if($canEditProfile && ! $isAdminEditingUser)
                     <div class="hidden sm:flex gap-3">
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
@@ -94,7 +108,7 @@
                     @if($canEditProfile)
                         <div>
                             <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">Account Settings</h3>
-                            <form method="post" action="{{ route('profile.update') }}" class="space-y-6">
+                            <form method="post" action="{{ $profileUpdateRoute }}" class="space-y-6">
                                 @csrf
                                 @method('patch')
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -107,19 +121,49 @@
                                         <input type="email" name="email" value="{{ old('email', $user->email) }}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
                                     </div>
                                 </div>
+
+                                @if($isAdminEditingUser)
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div class="space-y-1">
+                                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Role</label>
+                                            <select name="role" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200" @disabled(auth()->id() === $user->user_id)>
+                                                @foreach(($roles ?? collect()) as $role)
+                                                    <option value="{{ $role }}" @selected(old('role', $currentRole) === $role)>{{ Str::headline($role) }}</option>
+                                                @endforeach
+                                            </select>
+                                            @if(auth()->id() === $user->user_id)
+                                                <p class="text-xs text-slate-400">Use role management from another admin account for your own role.</p>
+                                            @endif
+                                        </div>
+                                        <div class="space-y-1">
+                                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</label>
+                                            <select name="is_active" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200" @disabled(auth()->id() === $user->user_id)>
+                                                <option value="1" @selected((string) old('is_active', (int) $user->is_active) === '1')>Active</option>
+                                                <option value="0" @selected((string) old('is_active', (int) $user->is_active) === '0')>Inactive</option>
+                                            </select>
+                                            @if(auth()->id() === $user->user_id)
+                                                <input type="hidden" name="role" value="{{ $currentRole }}">
+                                                <input type="hidden" name="is_active" value="{{ (int) $user->is_active }}">
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
+
                                 <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-all">Save Changes</button>
                             </form>
 
                             <hr class="my-8 border-slate-200 dark:border-slate-700">
 
                             <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">Update Password</h3>
-                            <form method="post" action="{{ route('password.update') }}" class="space-y-4">
+                            <form method="post" action="{{ $passwordUpdateRoute }}" class="space-y-4">
                                 @csrf
                                 @method('put')
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Password</label>
-                                    <input type="password" name="current_password" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
-                                </div>
+                                @if(! $isAdminEditingUser)
+                                    <div class="space-y-1">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Password</label>
+                                        <input type="password" name="current_password" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                    </div>
+                                @endif
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div class="space-y-1">
                                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">New Password</label>
@@ -170,11 +214,11 @@
                             <p>Joined {{ $user->created_at->format('M Y') }}</p>
                             <p>Last active: {{ $lastActivity ? $lastActivity->diffForHumans() : 'No recent activity' }}</p>
                         </div>
-                        @if($canEditProfile)
-                            <form method="post" action="{{ route('profile.destroy') }}" onsubmit="return confirm('Are you sure you want to delete your account?');">
+                        @if($canEditProfile && (! $isAdminEditingUser || auth()->id() !== $user->user_id))
+                            <form method="post" action="{{ $destroyRoute }}" onsubmit="return confirm('{{ $isAdminEditingUser ? 'Are you sure you want to delete this user? This action cannot be undone.' : 'Are you sure you want to delete your account?' }}');">
                                 @csrf
                                 @method('delete')
-                                <button type="submit" class="mt-6 w-full py-2 text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors">Delete Account</button>
+                                <button type="submit" class="mt-6 w-full py-2 text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors">{{ $isAdminEditingUser ? 'Delete User' : 'Delete Account' }}</button>
                             </form>
                         @endif
                     </div>

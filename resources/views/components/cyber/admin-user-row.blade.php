@@ -57,7 +57,7 @@
     </td>
     <td class="py-5 pl-4 pr-4 text-right align-middle">
         <div class="flex items-center justify-end gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
-            <a href="{{ route('admin.user.profile', $user->user_id) }}" class="w-8 h-8 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-400 transition-colors" title="Open profile">
+            <a href="{{ route('admin.user.edit', $user->user_id) }}" class="w-8 h-8 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-400 transition-colors" title="Edit user">
                 <span class="material-symbols-outlined text-[18px]">manage_accounts</span>
             </a>
         </div>

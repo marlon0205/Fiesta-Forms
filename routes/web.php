@@ -52,6 +52,10 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/survey/edit/{survey}', [SurveyController::class, 'editView'])->name('survey.edit');
     Route::patch('/survey/{survey}', [SurveyController::class, 'update'])->name('survey.update');
     Route::get('/user/{user}/profile', [ProfileController::class, 'show'])->name('user.profile');
+    Route::get('/user/{user}/edit', [ProfileController::class, 'editUser'])->name('user.edit');
+    Route::patch('/user/{user}', [ProfileController::class, 'updateUser'])->name('user.update');
+    Route::put('/user/{user}/password', [ProfileController::class, 'updateUserPassword'])->name('user.password.update');
+    Route::delete('/user/{user}', [ProfileController::class, 'destroyUser'])->name('user.destroy');
 });
 
 // Saves a new survey (POST)
