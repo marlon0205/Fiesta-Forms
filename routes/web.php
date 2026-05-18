@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\API\ApiSurveyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SurveyController;
@@ -26,7 +27,7 @@ Route::prefix('dashboard')->name('dashboard.')->group(function () {
 
 // Protected Cyber Dashboard Routes (auth required)
 Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')->group(function () {
-    Route::get('/admin', [SurveyController::class, 'index'])->name('admin');
+    Route::get('/admin', [AdminController::class, 'index'])->name('admin');
     Route::delete('/admin/survey/{survey}', [SurveyController::class, 'destroy'])->name('admin.survey.destroy');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
@@ -50,6 +51,11 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/survey', [SurveyController::class, 'store'])->name('survey.store');
     Route::get('/survey/edit/{survey}', [SurveyController::class, 'editView'])->name('survey.edit');
     Route::patch('/survey/{survey}', [SurveyController::class, 'update'])->name('survey.update');
+    Route::get('/user/{user}/profile', [ProfileController::class, 'show'])->name('user.profile');
+    Route::get('/user/{user}/edit', [ProfileController::class, 'editUser'])->name('user.edit');
+    Route::patch('/user/{user}', [ProfileController::class, 'updateUser'])->name('user.update');
+    Route::put('/user/{user}/password', [ProfileController::class, 'updateUserPassword'])->name('user.password.update');
+    Route::delete('/user/{user}', [ProfileController::class, 'destroyUser'])->name('user.destroy');
 });
 
 // Saves a new survey (POST)

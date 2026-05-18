@@ -8,10 +8,10 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-    class User extends Authenticatable implements MustVerifyEmail {
+class User extends Authenticatable implements MustVerifyEmail
+{
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
-
 
     protected $primaryKey = 'user_id';
 
@@ -29,19 +29,22 @@ use Spatie\Permission\Traits\HasRoles;
         'remember_token',
     ];
 
-    protected function casts(): array {
+    protected function casts(): array
+    {
         return [
             'email_verified_at' => 'datetime',
+            'is_active' => 'boolean',
             'password' => 'hashed',
         ];
     }
 
-    public function surveys() {
+    public function surveys()
+    {
         return $this->hasMany(Survey::class, 'user_id', 'user_id');
     }
 
-    public function votes() {
+    public function votes()
+    {
         return $this->hasMany(Votes::class, 'user_id', 'user_id');
     }
-
 }

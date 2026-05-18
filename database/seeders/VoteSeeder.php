@@ -13,6 +13,7 @@ class VoteSeeder extends Seeder
     {
         // Wir erstellen ein paar Dummy-User für die Votes
         $voters = User::factory()->count(20)->create();
+        $voters->each(fn (User $voter) => $voter->assignRole('customer'));
 
         $surveys = Survey::with('questions.answerOptions')->get();
 

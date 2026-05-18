@@ -4,10 +4,19 @@
 
 @section('content')
 @php
-    $user = auth()->user();
     $badges = ['Early Adopter', 'Top Voter', 'Feedback Guru'];
     $points = 1250;
-    $votesCount = $user->votes()->count();
+    $canEditProfile = $canEditProfile ?? auth()->id() === $user->user_id;
+    $isAdminEditingUser = $isAdminEditingUser ?? false;
+    $profileUpdateRoute = $isAdminEditingUser ? route('admin.user.update', $user) : route('profile.update');
+    $passwordUpdateRoute = $isAdminEditingUser ? route('admin.user.password.update', $user) : route('password.update');
+    $destroyRoute = $isAdminEditingUser ? route('admin.user.destroy', $user) : route('profile.destroy');
+    $votesCount = $user->votes_count ?? $user->votes()->count();
+    $lastActivity = $lastActivityAt
+        ? \Carbon\Carbon::createFromTimestamp($lastActivityAt)
+        : null;
+    $roleNames = $user->roles?->pluck('name')->join(', ');
+    $currentRole = $user->roles?->pluck('name')->first();
 @endphp
 
 <div class="max-w-4xl mx-auto py-8 fade-in">
@@ -33,6 +42,15 @@
         </div>
     @endif
 
+    @if($isAdminEditingUser)
+        <div class="mb-4">
+            <a href="{{ route('dashboard.admin', ['tab' => 'users']) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold shadow hover:bg-white dark:hover:bg-slate-700 transition-colors">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                Back to Users
+            </a>
+        </div>
+    @endif
+
     <div class="glass-panel dark:bg-slate-800/60 rounded-[2rem] shadow-2xl overflow-hidden border-0">
         <!-- Banner -->
         <div class="h-40 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 relative overflow-hidden">
@@ -50,16 +68,18 @@
                         </div>
                     </div>
                     <div class="mb-2">
-                        <h1 class="text-3xl font-black text-slate-900 dark:text-white">{{ $user->name }}</h1>
+                        <h1 class="text-3xl font-black text-slate-900 dark:text-white">{{ $isAdminEditingUser ? 'Edit '.$user->name : $user->name }}</h1>
                         <p class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ $user->email }}</p>
                     </div>
                 </div>
-                <div class="hidden sm:flex gap-3">
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="glass-button bg-rose-500 dark:bg-rose-600/50 hover:bg-rose-500 dark:hover:bg-rose-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all">Logout</button>
-                    </form>
-                </div>
+                @if($canEditProfile && ! $isAdminEditingUser)
+                    <div class="hidden sm:flex gap-3">
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="glass-button bg-rose-500 dark:bg-rose-600/50 hover:bg-rose-500 dark:hover:bg-rose-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all">Logout</button>
+                        </form>
+                    </div>
+                @endif
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -85,47 +105,101 @@
                         </div>
                     </div>
 
-                    <div>
-                        <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">Account Settings</h3>
-                        <form method="post" action="{{ route('profile.update') }}" class="space-y-6">
-                            @csrf
-                            @method('patch')
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Display Name</label>
-                                    <input type="text" name="name" value="{{ old('name', $user->name) }}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                    @if($canEditProfile)
+                        <div>
+                            <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">Account Settings</h3>
+                            <form method="post" action="{{ $profileUpdateRoute }}" class="space-y-6">
+                                @csrf
+                                @method('patch')
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div class="space-y-1">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Display Name</label>
+                                        <input type="text" name="name" value="{{ old('name', $user->name) }}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
+                                        <input type="email" name="email" value="{{ old('email', $user->email) }}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                    </div>
                                 </div>
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
-                                    <input type="email" name="email" value="{{ old('email', $user->email) }}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
-                                </div>
-                            </div>
-                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-all">Save Changes</button>
-                        </form>
 
-                        <hr class="my-8 border-slate-200 dark:border-slate-700">
+                                @if($isAdminEditingUser)
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div class="space-y-1">
+                                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Role</label>
+                                            <select name="role" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200" @disabled(auth()->id() === $user->user_id)>
+                                                @foreach(($roles ?? collect()) as $role)
+                                                    <option value="{{ $role }}" @selected(old('role', $currentRole) === $role)>{{ Str::headline($role) }}</option>
+                                                @endforeach
+                                            </select>
+                                            @if(auth()->id() === $user->user_id)
+                                                <p class="text-xs text-slate-400">Use role management from another admin account for your own role.</p>
+                                            @endif
+                                        </div>
+                                        <div class="space-y-1">
+                                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</label>
+                                            <select name="is_active" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200" @disabled(auth()->id() === $user->user_id)>
+                                                <option value="1" @selected((string) old('is_active', (int) $user->is_active) === '1')>Active</option>
+                                                <option value="0" @selected((string) old('is_active', (int) $user->is_active) === '0')>Inactive</option>
+                                            </select>
+                                            @if(auth()->id() === $user->user_id)
+                                                <input type="hidden" name="role" value="{{ $currentRole }}">
+                                                <input type="hidden" name="is_active" value="{{ (int) $user->is_active }}">
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
 
-                        <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">Update Password</h3>
-                        <form method="post" action="{{ route('password.update') }}" class="space-y-4">
-                            @csrf
-                            @method('put')
-                            <div class="space-y-1">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Password</label>
-                                <input type="password" name="current_password" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
-                            </div>
+                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-all">Save Changes</button>
+                            </form>
+
+                            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+                            <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">Update Password</h3>
+                            <form method="post" action="{{ $passwordUpdateRoute }}" class="space-y-4">
+                                @csrf
+                                @method('put')
+                                @if(! $isAdminEditingUser)
+                                    <div class="space-y-1">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Password</label>
+                                        <input type="password" name="current_password" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                    </div>
+                                @endif
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div class="space-y-1">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">New Password</label>
+                                        <input type="password" name="password" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Confirm Password</label>
+                                        <input type="password" name="password_confirmation" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                    </div>
+                                </div>
+                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-all">Update Password</button>
+                            </form>
+                        </div>
+                    @else
+                        <div>
+                            <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">Profile Details</h3>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">New Password</label>
-                                    <input type="password" name="password" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Username</div>
+                                    <div class="font-bold text-slate-900 dark:text-white">{{ $user->name }}</div>
                                 </div>
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Confirm Password</label>
-                                    <input type="password" name="password_confirmation" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-slate-700 dark:text-slate-200">
+                                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email Address</div>
+                                    <div class="font-bold text-slate-900 dark:text-white">{{ $user->email }}</div>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Role</div>
+                                    <div class="font-bold text-slate-900 dark:text-white">{{ $roleNames ?: 'No role' }}</div>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status</div>
+                                    <div class="font-bold text-slate-900 dark:text-white">{{ $user->is_active ? 'Active' : 'Inactive' }}</div>
                                 </div>
                             </div>
-                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-all">Update Password</button>
-                        </form>
-                    </div>
+                        </div>
+                    @endif
                 </div>
 
                 <div class="space-y-6">
@@ -138,13 +212,15 @@
                         <p class="text-xs text-slate-400 font-bold uppercase mb-4">Membership</p>
                         <div class="text-sm text-slate-600 dark:text-slate-300 space-y-2 font-medium">
                             <p>Joined {{ $user->created_at->format('M Y') }}</p>
-                            <p>Last active: {{ \Carbon\Carbon::parse($user->last_activity ?? now())->diffForHumans() }}</p>
+                            <p>Last active: {{ $lastActivity ? $lastActivity->diffForHumans() : 'No recent activity' }}</p>
                         </div>
-                        <form method="post" action="{{ route('profile.destroy') }}" onsubmit="return confirm('Are you sure you want to delete your account?');">
-                            @csrf
-                            @method('delete')
-                            <button type="submit" class="mt-6 w-full py-2 text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors">Delete Account</button>
-                        </form>
+                        @if($canEditProfile && (! $isAdminEditingUser || auth()->id() !== $user->user_id))
+                            <form method="post" action="{{ $destroyRoute }}" onsubmit="return confirm('{{ $isAdminEditingUser ? 'Are you sure you want to delete this user? This action cannot be undone.' : 'Are you sure you want to delete your account?' }}');">
+                                @csrf
+                                @method('delete')
+                                <button type="submit" class="mt-6 w-full py-2 text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors">{{ $isAdminEditingUser ? 'Delete User' : 'Delete Account' }}</button>
+                            </form>
+                        @endif
                     </div>
                 </div>
             </div>
