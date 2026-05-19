@@ -90,7 +90,7 @@ class SurveyController extends Controller {
         // Votes only save the userId and SurveyId so we know if they voted for a specific survey.
         // VoteAnswers saves the answers a user has given to a specific question per survey.
         try {
-            DB::transaction(function () use ($validated, $survey) {
+            DB::transaction(function () use ($validated, $survey, $questionCount) {
                 $vote = Votes::create([
                     'survey_id' => $survey->survey_id,
                     'user_id' => Auth::id(),
@@ -103,6 +103,8 @@ class SurveyController extends Controller {
                         'option_id' => $optionId,
                     ]);
                 }
+
+                Auth::user()->increment('points', $questionCount * 5);
             });
 
             return redirect()->route('dashboard.explore')->with('success', 'Thank you for your feedback!');

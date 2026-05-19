@@ -27,8 +27,13 @@ Route::prefix('dashboard')->name('dashboard.')->group(function () {
 
 // Protected Cyber Dashboard Routes (auth required)
 Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')->group(function () {
-    Route::get('/admin', [AdminController::class, 'index'])->name('admin');
-    Route::delete('/admin/survey/{survey}', [SurveyController::class, 'destroy'])->name('admin.survey.destroy');
+    Route::middleware('admin')->group(function () {
+        Route::get('/admin', [AdminController::class, 'index'])->name('admin');
+        Route::delete('/admin/survey/{survey}', [SurveyController::class, 'destroy'])->name('admin.survey.destroy');
+        Route::post('/admin/rewards', [AdminController::class, 'storeReward'])->name('admin.rewards.store');
+        Route::patch('/admin/rewards/{reward}', [AdminController::class, 'updateReward'])->name('admin.rewards.update');
+        Route::delete('/admin/rewards/{reward}', [AdminController::class, 'destroyReward'])->name('admin.rewards.destroy');
+    });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
 });

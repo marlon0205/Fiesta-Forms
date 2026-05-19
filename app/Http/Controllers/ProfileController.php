@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Reward;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,6 +33,7 @@ class ProfileController extends Controller
             'user' => $user,
             'canEditProfile' => true,
             'lastActivityAt' => $lastActivityAt,
+            ...$this->rewardData($user),
         ]);
     }
 
@@ -49,6 +51,7 @@ class ProfileController extends Controller
             'user' => $user,
             'canEditProfile' => false,
             'lastActivityAt' => $lastActivityAt,
+            ...$this->rewardData($user),
         ]);
     }
 
@@ -68,6 +71,7 @@ class ProfileController extends Controller
             'isAdminEditingUser' => true,
             'roles' => Role::query()->orderBy('name')->pluck('name'),
             'lastActivityAt' => $lastActivityAt,
+            ...$this->rewardData($user),
         ]);
     }
 
@@ -85,6 +89,22 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return Redirect::route('dashboard.profile')->with('status', 'profile-updated');
+    }
+
+    private function rewardData(User $user): array
+    {
+        $points = (int) $user->points;
+
+        return [
+            'earnedRewards' => Reward::query()
+                ->where('points_required', '<=', $points)
+                ->orderBy('points_required')
+                ->get(),
+            'nextReward' => Reward::query()
+                ->where('points_required', '>', $points)
+                ->orderBy('points_required')
+                ->first(),
+        ];
     }
 
     /**
