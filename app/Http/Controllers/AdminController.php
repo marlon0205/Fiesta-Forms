@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Reward;
 use App\Models\Survey;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class AdminController extends Controller
@@ -125,6 +129,55 @@ class AdminController extends Controller
             ->paginate(15, ['*'], 'users_page')
             ->withQueryString();
 
-        return view('cyber.admin', compact('surveys', 'users'));
+        $rewards = Reward::query()
+            ->orderBy('points_required')
+            ->paginate(15, ['*'], 'rewards_page')
+            ->withQueryString();
+
+        return view('cyber.admin', compact('surveys', 'users', 'rewards'));
+    }
+
+    public function storeReward(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'points_required' => ['required', 'integer', 'min:1', Rule::unique('rewards', 'points_required')],
+        ]);
+
+        Reward::create($validated);
+
+        return redirect()
+            ->route('dashboard.admin', ['tab' => 'rewards'])
+            ->with('success', 'Reward created successfully.');
+    }
+
+    public function updateReward(Request $request, Reward $reward): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'points_required' => [
+                'required',
+                'integer',
+                'min:1',
+                Rule::unique('rewards', 'points_required')->ignore($reward->reward_id, 'reward_id'),
+            ],
+        ]);
+
+        $reward->update($validated);
+
+        return redirect()
+            ->route('dashboard.admin', ['tab' => 'rewards'])
+            ->with('success', 'Reward updated successfully.');
+    }
+
+    public function destroyReward(Reward $reward): RedirectResponse
+    {
+        $reward->delete();
+
+        return redirect()
+            ->route('dashboard.admin', ['tab' => 'rewards'])
+            ->with('success', 'Reward deleted successfully.');
     }
 }
