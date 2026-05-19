@@ -4,7 +4,7 @@
 
 @section('content')
 @php
-    $activeTab = in_array(request('tab', 'forms'), ['forms', 'users', 'rewards'], true) ? request('tab', 'forms') : 'forms';
+    $activeTab = in_array(request('tab', 'forms'), ['forms', 'users', 'integrations', 'rewards'], true) ? request('tab', 'forms') : 'forms';
 @endphp
 
 <div class="max-w-7xl mx-auto py-4 fade-in">
