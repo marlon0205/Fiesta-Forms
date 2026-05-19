@@ -11,6 +11,7 @@ class Product_Categories extends Model
 
     protected $table = 'product__categories';
     protected $primaryKey = 'product_category_id';
+    protected $fillable = ['name'];
 
     public function surveys()
     {

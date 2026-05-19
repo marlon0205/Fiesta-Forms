@@ -11,6 +11,7 @@ class Service_Categories extends Model
 
     protected $table = 'service__categories';
     protected $primaryKey = 'service_category_id';
+    protected $fillable = ['name'];
 
     public function surveys()
     {

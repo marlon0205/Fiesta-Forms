@@ -2,9 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product_Categories;
+use App\Models\Service_Categories;
 use App\Models\Survey;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class AdminController extends Controller
@@ -14,6 +20,8 @@ class AdminController extends Controller
      */
     public function index(): View
     {
+        $activeTab = request('tab', 'forms');
+
         $sort = request('sort', 'created');
         $direction = request('direction', 'desc') === 'asc' ? 'asc' : 'desc';
 
@@ -125,6 +133,87 @@ class AdminController extends Controller
             ->paginate(15, ['*'], 'users_page')
             ->withQueryString();
 
-        return view('cyber.admin', compact('surveys', 'users'));
+        return view('cyber.admin', compact('surveys', 'users', 'activeTab'));
+    }
+
+    /**
+     * Sync categories from external API or JSON.
+     */
+    public function syncCategories(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'api_url' => 'nullable|url',
+            'api_token' => 'nullable|string',
+            'json_data' => 'nullable|string',
+        ]);
+
+        $data = null;
+
+        if ($request->api_url) {
+            try {
+                $response = Http::withToken($request->api_token)
+                    ->timeout(10) // Prevents hanging on bad URLs
+                    ->get($request->api_url);
+
+                if ($response->failed()) {
+                    $body = $response->body();
+                    
+                    // If it's HTML, strip tags first
+                    if (str_contains($response->header('Content-Type', ''), 'html')) {
+                        $body = strip_tags($body);
+                    }
+                    
+                    // Collapse all whitespace (newlines, tabs, multiple spaces) into a single space
+                    $body = preg_replace('/\s+/', ' ', $body);
+                    $body = trim(Str::limit($body, 150));
+
+                    $errorMessage = $response->status() === 401 || $response->status() === 403
+                        ? 'Authentication failed. Please check your token.'
+                        : 'API Error (' . $response->status() . '): ' . $body;
+                    
+                    return back()->with('error', $errorMessage);
+                }
+
+                $data = $response->json();
+            } catch (\Exception $e) {
+                return back()->with('error', 'Could not reach the API. Please check the URL and your connection. (Details: ' . $e->getMessage() . ')');
+            }
+        } elseif ($request->json_data) {
+            $data = json_decode($request->json_data, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return back()->with('error', 'Invalid JSON data provided.');
+            }
+        }
+
+        if (! $data) {
+            return back()->with('error', 'No data provided to sync.');
+        }
+
+        try {
+            DB::transaction(function () use ($data) {
+                if (isset($data['product_categories']) && is_array($data['product_categories'])) {
+                    foreach ($data['product_categories'] as $cat) {
+                        if (isset($cat['name'])) {
+                            Product_Categories::firstOrCreate(['name' => $cat['name']]);
+                        }
+                    }
+                }
+
+                if (isset($data['service_categories']) && is_array($data['service_categories'])) {
+                    foreach ($data['service_categories'] as $cat) {
+                        if (isset($cat['name'])) {
+                            Service_Categories::firstOrCreate(['name' => $cat['name']]);
+                        }
+                    }
+                }
+            });
+
+            return redirect()->route('dashboard.admin', ['tab' => 'integrations'])
+                ->with('success', 'Categories synced successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error syncing categories: ' . $e->getMessage());
+        }
     }
 }
+

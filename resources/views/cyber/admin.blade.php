@@ -4,7 +4,7 @@
 
 @section('content')
 @php
-    $activeTab = request('tab', 'forms') === 'users' ? 'users' : 'forms';
+    $activeTab = request('tab', 'forms');
 @endphp
 
 <div class="max-w-7xl mx-auto py-4 fade-in">
@@ -24,11 +24,13 @@
         <div class="flex border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur">
             <a href="{{ request()->fullUrlWithQuery(['tab' => 'forms', 'page' => 1]) }}" class="px-8 py-4 text-sm font-bold transition-colors {{ $activeTab === 'forms' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400 bg-white/50 dark:bg-slate-800/50' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200' }}">Forms</a>
             <a href="{{ request()->fullUrlWithQuery(['tab' => 'users', 'users_page' => 1]) }}" class="px-8 py-4 text-sm font-bold transition-colors {{ $activeTab === 'users' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400 bg-white/50 dark:bg-slate-800/50' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200' }}">Users</a>
-            <button onclick="showToast('Integrations feature coming soon')" class="px-8 py-4 text-sm font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">Integrations</button>
+            <a href="{{ request()->fullUrlWithQuery(['tab' => 'integrations']) }}" class="px-8 py-4 text-sm font-bold transition-colors {{ $activeTab === 'integrations' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400 bg-white/50 dark:bg-slate-800/50' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200' }}">Integrations</a>
         </div>
 
         @if($activeTab === 'users')
             <x-cyber.admin-users-tab :users="$users" />
+        @elseif($activeTab === 'integrations')
+            <x-cyber.admin-integrations-tab />
         @else
             <x-cyber.admin-forms-tab :surveys="$surveys" />
         @endif

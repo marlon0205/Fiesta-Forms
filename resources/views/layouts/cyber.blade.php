@@ -54,11 +54,13 @@
     </div>
 
     <!-- Notification Toast -->
-    <div class="fixed bottom-8 right-8 transition-all duration-500 z-50 glass dark:bg-slate-800 text-slate-800 dark:text-white px-6 py-4 rounded-2xl shadow-2xl border-l-4 border-pink-500 flex items-center gap-4 translate-y-24 opacity-0" id="toast">
-        <div class="bg-gradient-to-br from-pink-500 to-violet-600 p-2 rounded-full text-white shadow-lg">
-            <span class="material-symbols-outlined text-lg">check</span>
+    <div class="fixed bottom-8 right-8 transition-all duration-500 z-50 glass dark:bg-slate-800 text-slate-800 dark:text-white px-4 py-2.5 rounded-xl shadow-2xl border-l-4 border-pink-500 flex items-start gap-3 translate-y-24 opacity-0 max-w-xs md:max-w-md" id="toast">
+        <div class="flex-shrink-0 bg-gradient-to-br from-pink-500 to-violet-600 p-1 rounded-full text-white shadow-lg mt-0.5" id="toast-icon-container">
+            <span class="material-symbols-outlined text-base block" id="toast-icon">check</span>
         </div>
-        <span id="toast-msg" class="font-medium">Action completed</span>
+        <div class="flex-1 min-w-0">
+            <p id="toast-msg" class="text-sm leading-snug break-words font-medium py-0.5">Action completed</p>
+        </div>
     </div>
 
     @stack('scripts')
@@ -159,6 +161,8 @@
             document.addEventListener('DOMContentLoaded', () => {
                 showToast("{{ session('error') }}");
                 document.getElementById('toast').classList.replace('border-pink-500', 'border-red-500');
+                document.getElementById('toast-icon-container').classList.replace('from-pink-500', 'from-red-500');
+                document.getElementById('toast-icon').innerText = 'close';
             });
         </script>
     @endif

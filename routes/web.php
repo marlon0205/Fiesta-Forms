@@ -28,6 +28,7 @@ Route::prefix('dashboard')->name('dashboard.')->group(function () {
 // Protected Cyber Dashboard Routes (auth required)
 Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin');
+    Route::post('/admin/integrations', [AdminController::class, 'syncCategories'])->name('admin.integrations.sync');
     Route::delete('/admin/survey/{survey}', [SurveyController::class, 'destroy'])->name('admin.survey.destroy');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
@@ -77,5 +78,8 @@ Route::get('/testing/surveys/{survey}', [SurveyController::class, 'showView'])
 
 // Rest-API Endpoint for Surveys
 Route::get('/api/surveys/{survey}', [ApiSurveyController::class, 'show']);
+
+// Demo Endpoint for Category Integration Test
+Route::get('/api/demo/categories', [\App\Http\Controllers\API\ApiDemoController::class, 'categories']);
 
 require __DIR__.'/auth.php';
