@@ -72,7 +72,7 @@
                         </div>
                     </div>
                     <div class="mb-2">
-                        <h1 class="text-3xl font-black text-slate-900 dark:text-white">{{ $isAdminEditingUser ? 'Edit '.$user->name : $user->name }}</h1>
+                        <h1 class="text-3xl font-black text-slate-900 dark:text-white">{{ $user->name }}</h1>
                         <p class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ $user->email }}</p>
                     </div>
                 </div>
