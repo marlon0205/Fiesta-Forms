@@ -43,6 +43,8 @@ class VoteSeeder extends Seeder
                         'option_id' => $randomOption->option_id,
                     ]);
                 }
+
+                $voter->increment('points', $survey->questions->count() * 5);
             }
         }
     }

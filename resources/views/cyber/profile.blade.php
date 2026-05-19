@@ -4,8 +4,9 @@
 
 @section('content')
 @php
-    $badges = ['Early Adopter', 'Top Voter', 'Feedback Guru'];
-    $points = 1250;
+    $points = (int) $user->points;
+    $earnedRewards = $earnedRewards ?? collect();
+    $nextReward = $nextReward ?? null;
     $canEditProfile = $canEditProfile ?? auth()->id() === $user->user_id;
     $isAdminEditingUser = $isAdminEditingUser ?? false;
     $profileUpdateRoute = $isAdminEditingUser ? route('admin.user.update', $user) : route('profile.update');
@@ -17,6 +18,9 @@
         : null;
     $roleNames = $user->roles?->pluck('name')->join(', ');
     $currentRole = $user->roles?->pluck('name')->first();
+    $rewardProgress = $nextReward
+        ? min(100, (int) floor(($points / $nextReward->points_required) * 100))
+        : ($points > 0 ? 100 : 0);
 @endphp
 
 <div class="max-w-4xl mx-auto py-8 fade-in">
@@ -84,25 +88,31 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="col-span-2 space-y-8">
-                    <!-- Level Card -->
+                    <!-- Rewards Card -->
                     <div class="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-700 dark:to-slate-800 rounded-2xl p-6 border border-white/50 dark:border-slate-600 shadow-inner">
                         <div class="flex justify-between items-center mb-4">
                             <div>
-                                <span class="text-xs font-black uppercase tracking-widest text-indigo-500">Current Level</span>
-                                <div class="text-xl font-bold text-slate-800 dark:text-white">Master Contributor</div>
+                                <span class="text-xs font-black uppercase tracking-widest text-indigo-500">Rewards</span>
+                                <div class="text-xl font-bold text-slate-800 dark:text-white">
+                                    {{ $nextReward ? 'Next reward at '.$nextReward->points_required.' PTS' : 'All Rewards Earned' }}
+                                </div>
                             </div>
                             <div class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-pink-500">{{ $points }} PTS</div>
                         </div>
                         <div class="w-full bg-slate-200 dark:bg-slate-900 rounded-full h-4 mb-6 shadow-inner overflow-hidden">
-                            <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-4 rounded-full animate-pulse-slow" style="width: 70%"></div>
+                            <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-4 rounded-full animate-pulse-slow" style="width: {{ $rewardProgress }}%"></div>
                         </div>
-                        <div class="flex gap-3 flex-wrap">
-                            @foreach($badges as $badge)
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-700 shadow-sm text-xs font-bold text-slate-700 dark:text-slate-300">
-                                <span class="material-symbols-outlined text-sm text-yellow-500">verified</span> {{ $badge }}
-                            </span>
-                            @endforeach
-                        </div>
+                        @if($earnedRewards->isNotEmpty())
+                            <div class="flex gap-3 flex-wrap">
+                                @foreach($earnedRewards as $reward)
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-700 shadow-sm text-xs font-bold text-slate-700 dark:text-slate-300">
+                                        <span class="material-symbols-outlined text-sm text-yellow-500">verified</span> {{ $reward->name }}
+                                    </span>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-sm font-medium text-slate-500 dark:text-slate-400">No rewards earned yet.</p>
+                        @endif
                     </div>
 
                     @if($canEditProfile)
