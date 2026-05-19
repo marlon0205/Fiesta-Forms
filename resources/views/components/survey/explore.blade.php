@@ -24,6 +24,11 @@
                 <option value="{{ $category->name }}" {{ $selectedServiceCategory == $category->name ? 'selected' : '' }}>{{ $category->name }}</option>
                 @endforeach
             </select>
+            <select name="status" onchange="this.form.submit()" class="px-8 py-3 border-none rounded-xl text-sm font-bold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-lg focus:ring-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                <option value="">All Status</option>
+                <option value="active" {{ $selectedStatus == 'active' ? 'selected' : '' }}>Active</option>
+                <option value="inactive" {{ $selectedStatus == 'inactive' ? 'selected' : '' }}>Inactive</option>
+            </select>
         </form>
     </div>
 
