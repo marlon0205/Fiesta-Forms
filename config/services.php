@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'demo_api' => [
+        'token' => env('DEMO_API_TOKEN'),
+    ],
+
 ];

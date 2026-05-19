@@ -201,9 +201,13 @@ class AdminController extends Controller
         $data = null;
 
         if ($request->api_url) {
+            if (! $this->isSafeUrl($request->api_url)) {
+                return back()->with('error', 'The provided URL is not allowed.');
+            }
+
             try {
                 $response = Http::withToken($request->api_token)
-                    ->timeout(10) // Prevents hanging on bad URLs
+                    ->timeout(10)
                     ->get($request->api_url);
 
                 if ($response->failed()) {
@@ -227,7 +231,8 @@ class AdminController extends Controller
 
                 $data = $response->json();
             } catch (\Exception $e) {
-                return back()->with('error', 'Could not reach the API. Please check the URL and your connection. (Details: ' . $e->getMessage() . ')');
+                \Illuminate\Support\Facades\Log::error('Category sync API request failed: ' . $e->getMessage());
+                return back()->with('error', 'Could not reach the API. Please check the URL and your connection.');
             }
         } elseif ($request->json_data) {
             $data = json_decode($request->json_data, true);
@@ -263,8 +268,32 @@ class AdminController extends Controller
             return redirect()->route('dashboard.admin', ['tab' => 'integrations'])
                 ->with('success', 'Categories synced successfully.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Error syncing categories: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Category sync DB transaction failed: ' . $e->getMessage());
+            return back()->with('error', 'Error syncing categories. Please try again.');
         }
+    }
+
+    private function isSafeUrl(string $url): bool
+    {
+        $parsed = parse_url($url);
+
+        if (! isset($parsed['host'])) {
+            return false;
+        }
+
+        $host = strtolower($parsed['host']);
+        $blocked = ['localhost', '127.0.0.1', '0.0.0.0', '::1'];
+
+        if (in_array($host, $blocked, true)) {
+            return false;
+        }
+
+        $ip = gethostbyname($host);
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            return false;
+        }
+
+        return true;
     }
 }
 

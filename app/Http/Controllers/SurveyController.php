@@ -20,18 +20,15 @@ class SurveyController extends Controller {
      */
     public function show(Survey $survey){
 
-        $survey->load(['questions.answerOptions', 'serviceCategory', 'productCategory']);
+        $survey->load(['questions.answerOptions', 'questions.voteAnswers', 'serviceCategory', 'productCategory']);
         $totalSubmissions = $survey->votes()->count();
 
-        // Calculate results
-        // Loops through the questions and possible answerOptions to calculate the percentages and count the votes
-        // At the end each question will be put in to the results array with their id as index.
-        // The results array then will be send into the frontend
         $results = [];
         foreach ($survey->questions as $question) {
+            $voteCountByOption = $question->voteAnswers->groupBy('option_id')->map->count();
             $questionResults = [];
             foreach ($question->answerOptions as $option) {
-                $optionVotes = $question->voteAnswers()->where('option_id', $option->option_id)->count();
+                $optionVotes = $voteCountByOption->get($option->option_id, 0);
                 $percentage = $totalSubmissions > 0 ? round(($optionVotes / $totalSubmissions) * 100) : 0;
                 $questionResults[] = [
                     'label' => $option->option_text,
@@ -56,39 +53,36 @@ class SurveyController extends Controller {
     /**
      * Store a new vote for the survey.
      */
-    public function showView(Survey $survey) {
-        // Lade die Beziehungen
-        $survey->load(['questions.answerOptions', 'user', 'serviceCategory', 'productCategory']);
-    }
-
     public function vote(Request $request, Survey $survey){
-        // Check if user has already voted
+        if (! $survey->is_active) {
+            return redirect()->back()->with('error', 'This survey is no longer accepting responses.');
+        }
+
         if ($survey->votes()->where('user_id', Auth::id())->exists()) {
             return redirect()->back()->with('error', 'You have already voted on this survey.');
         }
 
-        // Ensure every question in the survey has an answer
+        $survey->load('questions.answerOptions');
         $questionCount = $survey->questions->count();
+        $surveyQuestionIds = $survey->questions->pluck('question_id')->all();
 
-        // the first array in the validate method are the rules. The second array are the error messages.
         $validated = $request->validate([
-            // 1. Check the array itself: Make sure they submitted exactly the right number of answers
             'questions'   => ['required', 'array', 'size:' . $questionCount],
-
-            // Apply rule to every answer in the array
-            'questions.*' => ['required', 'exists:answer_options,option_id'],
+            'questions.*' => ['required', 'integer'],
         ], [
             'questions.size' => 'Please answer all questions before submitting.',
-            'questions.*.exists' => 'One of the selected options is invalid.',
         ]);
 
+        foreach ($validated['questions'] as $questionId => $optionId) {
+            if (! in_array((int) $questionId, $surveyQuestionIds, true)) {
+                return redirect()->back()->withErrors(['questions' => 'Invalid question submitted.']);
+            }
+            $question = $survey->questions->firstWhere('question_id', (int) $questionId);
+            if (! $question?->answerOptions->contains('option_id', (int) $optionId)) {
+                return redirect()->back()->withErrors(['questions' => 'One of the selected options is invalid.']);
+            }
+        }
 
-        // loops through the user's answers. For every answer it creates a new record.
-        // "use ($validated, $survey)" is necessary so we can access the data inside the transaction function.
-        // first we create the votes for the user and the survey then we save the VoteAnswers.
-        //
-        // Votes only save the userId and SurveyId so we know if they voted for a specific survey.
-        // VoteAnswers saves the answers a user has given to a specific question per survey.
         try {
             DB::transaction(function () use ($validated, $survey, $questionCount) {
                 $vote = Votes::create([
@@ -114,12 +108,6 @@ class SurveyController extends Controller {
         }
     }
 
-    /**
-     * Shows the survey creation page.
-     */
-    /**
-     * Shows the survey creation page.
-     */
     public function createView()
     {
         return view('surveys.create', [
@@ -149,16 +137,7 @@ class SurveyController extends Controller {
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'category' => 'required|string',
-            'is_active' => 'required|boolean',
-            'questions' => 'required|array|min:1',
-            'questions.*.text' => 'required|string|max:255',
-            'questions.*.options' => 'required|array|min:2',
-            'questions.*.options.*' => 'required|string|max:255',
-        ]);
+        $validated = $request->validate($this->surveyValidationRules());
 
 
         /**
@@ -168,45 +147,18 @@ class SurveyController extends Controller {
          * Why transaction? -> If the server crashes in the middle of an operation everything will be reset.
          */
         DB::transaction(function () use ($validated) {
-            /**
-             * search for the ID based on the name of the category
-             */
-            $serviceCat = Service_Categories::where('name', $validated['category'] ?? '')->first();
-            $productCat = Product_Categories::where('name', $validated['category'] ?? '')->first();
+            $categoryIds = $this->resolveCategoryIds($validated['category']);
 
-            /**
-             * Create the survey
-             */
             $survey = Auth::user()->surveys()->create([
                 'title' => $validated['title'],
                 'description' => $validated['description'] ?? '',
-                'service_category_id' => $serviceCat?->service_category_id,
-                'product_category_id' => $productCat?->product_category_id,
+                'service_category_id' => $categoryIds['service_category_id'],
+                'product_category_id' => $categoryIds['product_category_id'],
                 'is_active' => (bool) $validated['is_active'],
-                'duration_days' => 30, // Default, if not set
+                'duration_days' => 30,
             ]);
 
-            /**
-             * Create the questions and answer options
-             *
-             * Iterate through each questions and the answer options.
-             * questions will only be saved if the question has answer options.
-             */
-            foreach ($validated['questions'] as $qData) {
-                $question = $survey->questions()->create([
-                    'question_text' => $qData['text'],
-                ]);
-
-                foreach ($qData['options'] as $optText) {
-                    // Only save the question if it has answer options
-                    if (filled($optText)) {
-                        /* Check why option_text is guarded. unguarding will make it fillable in Questions.php, i dont know why lol
-                         * Edit: False Positive. Intellij checks for 'option_text' in Questions because the chain started there.
-                         */
-                        $question->answerOptions()->create(['option_text' => $optText]);
-                    }
-                }
-            }
+            $this->createQuestionsAndOptions($survey, $validated['questions']);
         });
 
         return redirect()->route('dashboard.home')->with('success', 'Mission launched successfully!');
@@ -236,10 +188,7 @@ class SurveyController extends Controller {
                 $survey->votes()->delete();
             }
 
-            foreach ($survey->questions as $question) {
-                $question->answerOptions()->delete();
-            }
-
+            \App\Models\AnswerOptions::whereIn('question_id', $survey->questions()->pluck('question_id'))->delete();
             $survey->questions()->delete();
 
             $this->createQuestionsAndOptions($survey, $validated['questions']);
@@ -265,15 +214,8 @@ class SurveyController extends Controller {
                 // Delete all votes for this survey
                 $survey->votes()->delete();
 
-                // Delete all answer options for questions in this survey
-                foreach ($survey->questions as $question) {
-                    $question->answerOptions()->delete();
-                }
-
-                // Delete all questions for this survey
+                \App\Models\AnswerOptions::whereIn('question_id', $survey->questions()->pluck('question_id'))->delete();
                 $survey->questions()->delete();
-
-                // Finally delete the survey itself
                 $survey->delete();
             });
 
@@ -283,7 +225,7 @@ class SurveyController extends Controller {
             Log::error('Failed to delete survey: '.$e->getMessage());
 
             return redirect()->route('dashboard.admin')
-                ->with('error', 'Failed to delete survey: '.$e->getMessage());
+                ->with('error', 'Failed to delete the survey. Please try again.');
         }
     }
 

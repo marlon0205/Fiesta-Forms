@@ -9,7 +9,9 @@ class RecentActivity extends Component {
     public $recentSurveys;
 
     public function __construct() {
-        $this->recentSurveys = Survey::latest()
+        $this->recentSurveys = Survey::with(['serviceCategory', 'productCategory'])
+            ->withCount('votes')
+            ->latest()
             ->take(3)
             ->get()
             ->map(fn($survey) => [
@@ -18,7 +20,7 @@ class RecentActivity extends Component {
                 'description' => $survey->description,
                 'category' => $survey->serviceCategory->name ?? $survey->productCategory->name ?? 'General',
                 'status' => $survey->is_active ? 'active' : 'expired',
-                'submissions' => $survey->votes()->count()
+                'submissions' => $survey->votes_count,
             ]);
     }
 

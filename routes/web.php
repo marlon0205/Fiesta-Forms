@@ -22,7 +22,7 @@ Route::prefix('dashboard')->name('dashboard.')->group(function () {
     })->name('explore');
 
     Route::get('/form/{survey}', [SurveyController::class, 'show'])->name('form-detail');
-    Route::post('/form/{survey}/vote', [SurveyController::class, 'vote'])->middleware('auth')->name('form.vote');
+    Route::post('/form/{survey}/vote', [SurveyController::class, 'vote'])->middleware(['auth', 'throttle:10,1'])->name('form.vote');
 });
 
 // Protected Cyber Dashboard Routes (auth required)
