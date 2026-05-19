@@ -16,12 +16,14 @@ class Explore extends Component
     public $search;
     public $selectedProductCategory;
     public $selectedServiceCategory;
+    public $selectedStatus;
 
     public function __construct(Request $request)
     {
         $this->search = $request->input('search');
         $this->selectedProductCategory = $request->input('product_category');
         $this->selectedServiceCategory = $request->input('service_category');
+        $this->selectedStatus = $request->input('status');
 
         $this->productCategories = Product_Categories::all();
         $this->serviceCategories = Service_Categories::all();
@@ -53,6 +55,13 @@ class Explore extends Component
             $query->whereHas('serviceCategory', function ($q) {
                 $q->where('name', $this->selectedServiceCategory);
             });
+        }
+
+        // Apply Status Filter
+        if ($this->selectedStatus === 'active') {
+            $query->where('is_active', true);
+        } elseif ($this->selectedStatus === 'inactive') {
+            $query->where('is_active', false);
         }
 
         // Execute query and map results for the view
