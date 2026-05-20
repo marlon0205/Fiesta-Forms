@@ -28,7 +28,7 @@ class Explore extends Component
         $this->productCategories = Product_Categories::all();
         $this->serviceCategories = Service_Categories::all();
 
-        $query = Survey::with(['productCategory', 'serviceCategory', 'votes']);
+        $query = Survey::with(['productCategory', 'serviceCategory'])->withCount('votes');
 
         // Apply Search Filter
         if ($this->search) {
@@ -75,7 +75,7 @@ class Explore extends Component
                 'status' => $survey->is_active ? 'Active' : 'Expired',
                 // Determine category: either product or service
                 'category' => $survey->productCategory->name ?? $survey->serviceCategory->name ?? 'General',
-                'submissions' => $survey->votes->count(),
+                'submissions' => $survey->votes_count,
             ];
         });
     }

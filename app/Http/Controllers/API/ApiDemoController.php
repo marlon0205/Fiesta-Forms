@@ -13,10 +13,10 @@ class ApiDemoController extends Controller
      */
     public function categories(Request $request): JsonResponse
     {
-        // Simple token check for demo purposes
+        $expectedToken = config('services.demo_api.token');
         $token = $request->bearerToken();
-        
-        if ($token !== 'demo-token-123') {
+
+        if (! $expectedToken || ! hash_equals($expectedToken, (string) $token)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 

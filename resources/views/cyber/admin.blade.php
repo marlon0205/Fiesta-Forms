@@ -55,10 +55,10 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         @if(session('success'))
-            showToast({!! json_encode(session('success')) !!});
+            showToast({{ Js::from(session('success')) }});
         @endif
         @if(session('error'))
-            showToast({!! json_encode(session('error')) !!});
+            showToast({{ Js::from(session('error')) }});
         @endif
     });
 </script>

@@ -11,16 +11,16 @@ class TopUsers extends Component {
     public $votes;
 
     public function __construct() {
-        $this->votes = Votes::select('user_id')
-            ->selectRaw('count(*) as total_votes')
-            ->groupBy('user_id')
+        $this->votes = Votes::select('users.name')
+            ->selectRaw('COUNT(votes.vote_id) as total_votes')
+            ->join('users', 'votes.user_id', '=', 'users.user_id')
+            ->groupBy('users.user_id', 'users.name')
             ->orderByDesc('total_votes')
-            ->take(5)
-            ->with('user')
+            ->limit(5)
             ->get()
-            ->map(fn($vote) => [
-                'name' => $vote->user->name ?? 'Anonymous Voter',
-                'votes' => $vote->total_votes
+            ->map(fn($row) => [
+                'name' => $row->name ?? 'Anonymous Voter',
+                'votes' => $row->total_votes,
             ]);
     }
 
