@@ -14,7 +14,7 @@ The voting system records interactions:
 
 | Table Name | Description | Key Columns |
 | :--- | :--- | :--- |
-| `users` | Application users. | `user_id`, `name`, `email`, `password` |
+| `users` | Application users. | `user_id`, `name`, `email`, `password`, `is_active`, `vote_count`, `badge` |
 | `surveys` | Survey metadata. | `survey_id`, `title`, `description`, `user_id`, `is_active` |
 | `questions` | Questions within a survey. | `question_id`, `survey_id`, `question_text` |
 | `answer_options` | Available choices for a question. | `option_id`, `question_id`, `option_text` |
@@ -22,6 +22,7 @@ The voting system records interactions:
 | `vote_answers` | The specific options chosen in a vote. | `vote_answer_id`, `vote_id`, `question_id`, `option_id` |
 | `product_categories`| Categories for grouping surveys. | `product_category_id`, `name` |
 | `service_categories`| Categories for grouping surveys. | `service_category_id`, `name` |
+| `rewards` | Redemption rewards tied to vote points. | `reward_id`, `name`, `description`, `points_required` |
 
 ## Model Relationships
 
@@ -47,6 +48,13 @@ The voting system records interactions:
 -   `question()`: BelongsTo `Questions`
 -   `answerOption()`: BelongsTo `AnswerOptions`
 
+### User Model
+-   `votes()`: HasMany `Votes`
+-   `roles()`: BelongsToMany via Spatie Permission (`HasRoles` trait)
+
+### Reward Model
+No relations — standalone entity. The `points_required` column is unique across all rewards.
+
 ## Migrations History
 
 1.  **Foundational Tables**: Users, Cache, Jobs (Laravel defaults).
@@ -54,3 +62,4 @@ The voting system records interactions:
 3.  **Survey Core**: Surveys, Questions, Answer Options.
 4.  **Voting System**: Votes and Vote Answers.
 5.  **Permissions**: Spatie's permission table migrations.
+6.  **Rewards**: Rewards table (`reward_id`, `name`, `description`, `points_required`).

@@ -1,42 +1,47 @@
 # Fiesta-Forms
 
-Willkommen bei **Fiesta-Forms**. Dieses Projekt ist eine Laravel-Anwendung, die Docker (via Laravel Sail) für die Entwicklungsumgebung nutzt.
+A survey creation and voting platform with a Cyber-themed UI.
 
-## 📋 Voraussetzungen
-
-Bevor du startest, stelle sicher, dass folgende Software installiert ist:
-
-### Für Linux & macOS
-- [Docker Engine](https://docs.docker.com/engine/install/) & [Docker Compose](https://docs.docker.com/compose/install/)
-- Git
-
-### Für Windows
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [WSL2](https://learn.microsoft.com/de-de/windows/wsl/install) (Windows Subsystem for Linux)
-    - *Empfehlung:* Führe alle Befehle innerhalb einer WSL2-Distro (z. B. Ubuntu) aus, um Performance-Probleme zu vermeiden.
+**Laravel 12** · **PHP 8.4** · **PostgreSQL 17** · **Tailwind CSS** · **Docker (Sail)**
 
 ---
 
-## 🚀 Installation & Setup
+## What is Fiesta-Forms?
 
-Folge diesen Schritten, um das Projekt lokal zum Laufen zu bringen.
+Fiesta-Forms lets admins build multi-question surveys that authenticated users can discover and vote on. Each vote is recorded per-question, rate-limited, and wrapped in a DB transaction. An admin panel provides full control over surveys, users, rewards, and category integrations.
 
-### 1. Repository klonen
+---
+
+## Features
+
+- **Survey management** — create, edit, delete surveys with multiple questions and answer options
+- **Voting system** — single vote per user, all questions required, rate-limited (10/min), DB transaction
+- **Role-based access** — `admin`, `customer`, `guest` via Spatie Laravel Permission
+- **Admin dashboard** — tabbed panel (Forms · Users · Rewards · Integrations) with sortable, paginated tables
+- **User management** — admins can edit, reset passwords, and delete any user account
+- **Rewards** — define point-threshold rewards tied to user vote counts
+- **Category integration** — import product/service categories from a REST API or raw JSON (SSRF-protected)
+- **REST API** — JSON endpoints for surveys and categories
+- **Cyber UI** — responsive dark theme built with Tailwind CSS
+
+---
+
+## Quick Start
+
+### 1. Clone
 ```bash
-git clone <DEIN-REPO-URL>
+git clone <repo-url>
 cd Fiesta-Forms
 ```
 
-### 2. Umgebungsvariablen konfigurieren
-Kopiere die Beispiel-Konfiguration:
+### 2. Environment
 ```bash
 cp .env.example .env
 ```
-*Hinweis:* Die Standard-Einstellungen in der `.env` sind bereits für die Docker-Umgebung (Sail) vorkonfiguriert (PostgreSQL, Redis etc.).
+Defaults in `.env` are pre-configured for Docker (PostgreSQL, Redis).
 
-### 3. Abhängigkeiten installieren
-Da wir Sail nutzen, können wir einen kleinen Container verwenden, um die PHP-Abhängigkeiten zu installieren, ohne PHP lokal installiert haben zu müssen:
-
+### 3. Install PHP dependencies
+No local PHP needed — use the Sail bootstrap container:
 ```bash
 docker run --rm \
     -u "$(id -u):$(id -g)" \
@@ -46,89 +51,111 @@ docker run --rm \
     composer install --ignore-platform-reqs
 ```
 
-### 4. Docker Container starten (Sail)
-Starte die Anwendung im Hintergrund:
+### 4. Start containers
 ```bash
 ./vendor/bin/sail up -d
 ```
-*Dies kann beim ersten Mal einige Minuten dauern, da die Images gebaut werden.*
 
-### 5. Key generieren & Frontend bauen
-Sobald die Container laufen:
-
+### 5. Generate key & build frontend
 ```bash
-# App Key generieren
 ./vendor/bin/sail artisan key:generate
-
-# Node-Abhängigkeiten installieren und Assets bauen
 ./vendor/bin/sail npm install
 ./vendor/bin/sail npm run build
 ```
 
-### 6. Datenbank einrichten
-Führe die Migrationen und Seeder aus, um die Datenbank zu füllen:
+### 6. Run migrations & seed
 ```bash
 ./vendor/bin/sail artisan migrate --seed
 ```
 
+App is now at **http://localhost**.
+
 ---
 
-## 🏁 Starten & Nutzen
+## Development
 
-Die Anwendung ist nun unter folgender Adresse erreichbar:
-
-👉 **http://localhost**
-
-### Entwicklung (Hot Reloading)
-Für die Frontend-Entwicklung (Vite) starte den Dev-Server:
 ```bash
+# Frontend hot reload (Vite)
 ./vendor/bin/sail npm run dev
-```
 
-### Container stoppen
-```bash
+# Reset database (fresh migrate + seed)
+./vendor/bin/sail artisan migrate:fresh --seed
+# or
+./rebuild.sh
+
+# Stop containers
 ./vendor/bin/sail down
 ```
 
----
-
-## 🛠 Nützliche Befehle & Skripte
-
-### Sail Alias (Optional)
-Um nicht immer `./vendor/bin/sail` tippen zu müssen, kannst du einen Alias setzen:
+Optional alias to avoid typing `./vendor/bin/sail` every time:
 ```bash
 alias sail='[ -f sail ] && bash sail || bash vendor/bin/sail'
 ```
-Dann kannst du Befehle einfach so nutzen: `sail artisan ...`
-
-### Datenbank zurücksetzen
-Im Projekt liegt ein Hilfsskript `reset-db.sh`, das die Datenbank komplett löscht, neu aufbaut und mit Testdaten füllt.
-
-**Nutzung (Linux/Mac/WSL):**
-```bash
-chmod +x reset-db.sh  # Einmalig ausführbar machen
-./reset-db.sh
-```
-
-### Tests ausführen
-```bash
-./vendor/bin/sail test
-```
 
 ---
 
-## 🐛 Troubleshooting
+## Test Accounts
 
-**Berechtigungsprobleme (Linux):**
-Falls du Schreibrechte-Fehler bekommst, stelle sicher, dass dein User Eigentümer der Dateien ist:
+| Role | Email | Password |
+|------|-------|----------|
+| admin | admin@admin.de | admin |
+| customer | customer@customer.de | customer |
+| guest | guest@guest.de | guest |
+
+---
+
+## Routes Overview
+
+| Method | URI | Description |
+|--------|-----|-------------|
+| GET | `/dashboard` | Public home |
+| GET | `/dashboard/explore` | Browse surveys |
+| GET | `/dashboard/form/{id}` | Survey detail & voting |
+| GET | `/dashboard/admin` | Admin panel *(auth + admin)* |
+| GET | `/admin/survey/create` | Create survey *(admin)* |
+| GET | `/admin/user/{id}/edit` | Edit user *(admin)* |
+| GET | `/api/surveys/{id}` | Survey JSON |
+| GET | `/api/demo/categories` | Categories JSON |
+
+Full route reference: [`docs/routes.md`](docs/routes.md)
+
+---
+
+## Testing
+
+```bash
+# Run all tests
+./vendor/bin/sail test
+
+# Single file
+./vendor/bin/sail test tests/Feature/Auth/AuthenticationTest.php
+
+# Filter by name
+./vendor/bin/sail test --filter=SurveyTest
+```
+
+Tests use Pest PHP with an in-memory SQLite database (`phpunit.xml`).
+
+---
+
+## Troubleshooting
+
+**Port conflict (80 or 5432 already in use)**
+```dotenv
+# .env
+APP_PORT=8080
+FORWARD_DB_PORT=5433
+```
+Then restart: `./vendor/bin/sail up -d`
+
+**Permission errors (Linux)**
 ```bash
 sudo chown -R $USER:$USER .
 ```
 
-**Port belegt:**
-Falls Port 80 oder 5432 (Postgres) belegt sind, kannst du diese in der `.env` Datei ändern:
-```dotenv
-APP_PORT=8080
-FORWARD_DB_PORT=5433
-```
-Danach `sail up -d` neu ausführen.
+---
+
+## Docs
+
+Full documentation lives in [`docs/`](docs/):
+[Architecture](docs/architecture.md) · [Database](docs/database.md) · [Controllers](docs/controllers.md) · [Routes](docs/routes.md) · [API](docs/api.md) · [Frontend](docs/frontend.md)

@@ -11,6 +11,8 @@ This document provides a detailed description of the core business entities (Mod
     -   `email`: Unique email address.
     -   `is_active`: Boolean status of the user account.
     -   `email_verified_at`: Timestamp of email verification.
+    -   `vote_count`: Total number of votes cast by the user (integer, default 0).
+    -   `badge`: Achievement/badge level (integer, default 0).
 -   **Traits**: `HasFactory`, `Notifiable`, `HasRoles`, `MustVerifyEmail`.
 
 ## Survey
@@ -59,7 +61,16 @@ This document provides a detailed description of the core business entities (Mod
     -   `question_id`: Foreign key to the `Question` being answered.
     -   `option_id`: Foreign key to the chosen `AnswerOption`.
 
+## Reward
+-   **Class**: `App\Models\Reward`
+-   **Description**: A redeemable reward that users can earn once their `vote_count` reaches the required threshold.
+-   **Key Properties**:
+    -   `reward_id`: Primary key.
+    -   `name`: Display name (max 255 chars).
+    -   `description`: Optional description (max 255 chars, nullable).
+    -   `points_required`: Integer (min 1, unique) — the vote-points threshold to earn this reward.
+
 ## Categories (Product & Service)
 -   **Classes**: `App\Models\Product_Categories`, `App\Models\Service_Categories`
--   **Description**: Simple taxonomy for grouping surveys.
+-   **Description**: Simple taxonomy for grouping surveys. Can be imported via the admin Integrations panel from an external REST API or raw JSON.
 -   **Note**: These use non-standard table names (`product__categories` and `service__categories`).

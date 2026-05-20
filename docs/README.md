@@ -18,8 +18,12 @@ Fiesta-Forms is designed to allow users to create, share, and participate in sur
 
 ### Key Features
 
--   **Survey Management**: Create, edit, and delete surveys with multiple questions.
--   **Question Options**: Define multiple answer options for each question.
--   **Voting System**: Secure voting mechanism for authenticated users.
--   **Role-Based Access**: Administrative and user roles managed via Spatie Laravel Permission.
--   **Modern UI**: Responsive design using Tailwind CSS with a unique Cyber aesthetic.
+-   **Survey Management**: Create, edit, and delete surveys with multiple questions and answer options.
+-   **Voting System**: Single-vote-per-user enforcement with rate limiting (10 req/min) and DB transaction wrapping.
+-   **Role-Based Access**: `admin`, `customer`, and `guest` roles via Spatie Laravel Permission.
+-   **Admin Dashboard**: Tabbed panel (Forms, Users, Rewards, Integrations) with sortable, paginated tables.
+-   **User Management**: Admins can view, edit, reset passwords, and delete any user account.
+-   **Rewards System**: Define point-threshold rewards tied to user `vote_count`.
+-   **Category Integration**: Import product/service categories from an external REST API or raw JSON (with SSRF protection).
+-   **REST API**: JSON endpoints for survey data (`/api/surveys/{id}`) and category listings (`/api/demo/categories`).
+-   **Modern UI**: Responsive Cyber-themed design with Tailwind CSS.

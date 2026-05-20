@@ -3,27 +3,26 @@
 This document describes the REST API endpoints available in Fiesta-Forms.
 
 ## Overview
-The API provides programmatic access to survey data. Currently, it is used primarily for fetching survey details and questions.
+All API routes are defined in `routes/web.php` (not `api.php`) and are currently public (no authentication required).
 
-**Base URL**: `/api`
+**Base URL**: `http://localhost` (dev)
+
+---
 
 ## Endpoints
 
-### Get Survey Details
-Returns the details of a specific survey, including its questions and answer options.
+### GET /api/surveys/{survey}
+Returns a survey with its questions and answer options.
 
--   **URL**: `/api/surveys/{survey_id}`
--   **Method**: `GET`
--   **Auth Required**: No (currently public as per `web.php` reference)
--   **URL Params**:
-    -   `survey_id` (Integer): The unique ID of the survey.
+-   **Auth Required**: No
+-   **URL Params**: `survey` — the `survey_id` of the survey.
 
-**Response Body (JSON)**:
+**Response (JSON)**:
 ```json
 {
     "survey_id": 1,
     "title": "Example Survey",
-    "description": "This is a sample description.",
+    "description": "A sample description.",
     "is_active": true,
     "service_category": {
         "service_category_id": 1,
@@ -34,37 +33,38 @@ Returns the details of a specific survey, including its questions and answer opt
             "question_id": 10,
             "question_text": "How satisfied are you?",
             "answer_options": [
-                {
-                    "option_id": 101,
-                    "option_text": "Very Satisfied"
-                },
-                {
-                    "option_id": 102,
-                    "option_text": "Neutral"
-                }
+                { "option_id": 101, "option_text": "Very Satisfied" },
+                { "option_id": 102, "option_text": "Neutral" }
             ]
         }
     ]
 }
 ```
 
-### Get Current User
-Returns the authenticated user's information.
+---
 
--   **URL**: `/api/user`
--   **Method**: `GET`
--   **Auth Required**: Yes (Sanctum/Session)
+### GET /api/demo/categories
+Returns all product and service categories. Used for integration testing and the admin category import feature.
 
-**Response Body (JSON)**:
+-   **Auth Required**: No
+-   **Controller**: `ApiDemoController@categories`
+
+**Response (JSON)**:
 ```json
 {
-    "user_id": 1,
-    "name": "John Doe",
-    "email": "john@example.com",
-    "email_verified_at": "2026-05-16T12:00:00.000000Z"
+    "product_categories": [
+        { "product_category_id": 1, "name": "Electronics" }
+    ],
+    "service_categories": [
+        { "service_category_id": 1, "name": "Consulting" }
+    ]
 }
 ```
 
+---
+
 ## Security & Rate Limiting
--   **Authentication**: Managed via Laravel Sanctum (for token-based access) or standard session cookies (for web-based API calls).
--   **Middleware**: The API routes are protected by the `api` middleware group, which includes rate limiting by default.
+
+-   **Voting endpoint** (`POST /dashboard/form/{survey}/vote`): Rate-limited to **10 requests per minute** per user (`throttle:10,1`). Requires authentication.
+-   **API endpoints**: Currently public. No token required.
+-   **Category sync** (`POST /dashboard/admin/integrations`): SSRF protection blocks requests to localhost, private IP ranges, and reserved addresses.
