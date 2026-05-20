@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -46,5 +47,23 @@ class User extends Authenticatable implements MustVerifyEmail
     public function votes()
     {
         return $this->hasMany(Votes::class, 'user_id', 'user_id');
+    }
+
+    public function assignUnverifiedRole(): void
+    {
+        if ($this->hasRole('admin')) {
+            return;
+        }
+
+        $this->syncRoles([Role::findOrCreate('guest')]);
+    }
+
+    public function promoteVerifiedCustomerRole(): void
+    {
+        if ($this->hasRole('admin')) {
+            return;
+        }
+
+        $this->syncRoles([Role::findOrCreate('customer')]);
     }
 }

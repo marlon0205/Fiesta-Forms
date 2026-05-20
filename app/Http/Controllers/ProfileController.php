@@ -88,6 +88,10 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
+        if (! $request->user()->hasVerifiedEmail()) {
+            $request->user()->assignUnverifiedRole();
+        }
+
         return Redirect::route('dashboard.profile')->with('status', 'profile-updated');
     }
 
@@ -132,7 +136,9 @@ class ProfileController extends Controller
                 'email' => $validated['email'],
             ]);
 
-            if ($user->isDirty('email')) {
+            $emailChanged = $user->isDirty('email');
+
+            if ($emailChanged) {
                 $user->email_verified_at = null;
             }
 
@@ -142,7 +148,9 @@ class ProfileController extends Controller
 
             $user->save();
 
-            if ($request->user()->isNot($user) && ! empty($validated['role'])) {
+            if (! $user->hasVerifiedEmail()) {
+                $user->assignUnverifiedRole();
+            } elseif ($request->user()->isNot($user) && ! empty($validated['role'])) {
                 $user->syncRoles([$validated['role']]);
             }
         });

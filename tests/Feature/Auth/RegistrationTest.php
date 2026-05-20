@@ -1,5 +1,13 @@
 <?php
 
+use App\Models\User;
+use Spatie\Permission\Models\Role;
+
+beforeEach(function () {
+    Role::findOrCreate('customer');
+    Role::findOrCreate('guest');
+});
+
 test('registration screen can be rendered', function () {
     $response = $this->get('/register');
 
@@ -15,5 +23,12 @@ test('new users can register', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+
+    $user = User::where('email', 'test@example.com')->firstOrFail();
+
+    expect($user->hasRole('guest'))->toBeTrue()
+        ->and($user->hasRole('customer'))->toBeFalse()
+        ->and($user->hasVerifiedEmail())->toBeFalse();
+
+    $response->assertRedirect(route('dashboard.home', absolute: false));
 });

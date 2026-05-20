@@ -5,20 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\Product_Categories;
 use App\Models\Service_Categories;
 use App\Models\Survey;
-use App\Models\Votes;
 use App\Models\VoteAnswers;
+use App\Models\Votes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
-class SurveyController extends Controller {
-
+class SurveyController extends Controller
+{
     /**
      * Display the survey detail page for both customers (to vote) and guests (to see results).
      */
-    public function show(Survey $survey){
+    public function show(Survey $survey)
+    {
 
         $survey->load(['questions.answerOptions', 'questions.voteAnswers', 'serviceCategory', 'productCategory']);
         $totalSubmissions = $survey->votes()->count();
@@ -53,7 +54,16 @@ class SurveyController extends Controller {
     /**
      * Store a new vote for the survey.
      */
-    public function vote(Request $request, Survey $survey){
+    public function vote(Request $request, Survey $survey)
+    {
+        if (! $request->user()->hasRole('customer')) {
+            if (! $request->user()->hasVerifiedEmail()) {
+                return redirect()->route('verification.notice');
+            }
+
+            return redirect()->back()->with('error', 'Only customer accounts can vote on surveys.');
+        }
+
         if (! $survey->is_active) {
             return redirect()->back()->with('error', 'This survey is no longer accepting responses.');
         }
@@ -67,7 +77,7 @@ class SurveyController extends Controller {
         $surveyQuestionIds = $survey->questions->pluck('question_id')->all();
 
         $validated = $request->validate([
-            'questions'   => ['required', 'array', 'size:' . $questionCount],
+            'questions' => ['required', 'array', 'size:'.$questionCount],
             'questions.*' => ['required', 'integer'],
         ], [
             'questions.size' => 'Please answer all questions before submitting.',
@@ -103,7 +113,8 @@ class SurveyController extends Controller {
 
             return redirect()->route('dashboard.explore')->with('success', 'Thank you for your feedback!');
         } catch (\Exception $e) {
-            Log::error('Failed to store vote: ' . $e->getMessage());
+            Log::error('Failed to store vote: '.$e->getMessage());
+
             return redirect()->back()->with('error', 'Failed to submit vote. Please try again.');
         }
     }
@@ -138,7 +149,6 @@ class SurveyController extends Controller {
     public function store(Request $request)
     {
         $validated = $request->validate($this->surveyValidationRules());
-
 
         /**
          * DB::transaction explanation: https://laravel.com/docs/12.x/database#database-transactions
