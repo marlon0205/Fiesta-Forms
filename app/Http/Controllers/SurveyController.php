@@ -165,6 +165,7 @@ class SurveyController extends Controller
                 'service_category_id' => $categoryIds['service_category_id'],
                 'product_category_id' => $categoryIds['product_category_id'],
                 'is_active' => (bool) $validated['is_active'],
+                'expires_at' => $validated['expires_at'] ?: null,
                 'duration_days' => 30,
             ]);
 
@@ -192,6 +193,7 @@ class SurveyController extends Controller
                 'service_category_id' => $categoryIds['service_category_id'],
                 'product_category_id' => $categoryIds['product_category_id'],
                 'is_active' => (bool) $validated['is_active'],
+                'expires_at' => $validated['expires_at'] ?: null,
             ]);
 
             if ($hadVotes) {
@@ -260,6 +262,7 @@ class SurveyController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'is_active' => 'required|boolean',
+            'expires_at' => 'nullable|date|after:today',
             'category' => [
                 'required',
                 'string',

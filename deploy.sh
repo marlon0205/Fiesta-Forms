@@ -118,17 +118,20 @@ fi
 
 cd "$APP_DIR"
 
-# ── Generate APP_KEY (base64:…, no PHP needed) ───────────────
-generate_key() {
-  echo "base64:$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d '\n')"
+# ── Random string helpers (pipefail-safe) ────────────────────
+random_b64_32() {
+  dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d '\n'
+}
+random_alnum() {
+  dd if=/dev/urandom bs=256 count=1 2>/dev/null | base64 | tr -dc 'A-Za-z0-9' | dd bs=1 count=32 2>/dev/null
 }
 
 # ── .env setup ───────────────────────────────────────────────
 step "Environment configuration"
 
 if [ ! -f .env ]; then
-  APP_KEY=$(generate_key)
-  DB_PASS="$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)"
+  APP_KEY="base64:$(random_b64_32)"
+  DB_PASS="$(random_alnum)"
 
   cat > .env <<EOF
 APP_ENV=production
@@ -153,7 +156,7 @@ fi
 # Export vars so docker compose can read them
 set -a
 # shellcheck disable=SC1091
-source .env
+. .env
 set +a
 
 # ── Build ─────────────────────────────────────────────────────

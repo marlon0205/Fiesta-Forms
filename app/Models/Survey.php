@@ -18,6 +18,12 @@ class Survey extends Model {
         'product_category_id',
         'duration_days',
         'is_active',
+        'expires_at',
+    ];
+
+    protected $casts = [
+        'expires_at' => 'datetime',
+        'is_active' => 'boolean',
     ];
 
     public function user() {

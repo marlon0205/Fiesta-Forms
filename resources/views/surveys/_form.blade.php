@@ -1,4 +1,4 @@
-<form id="{{ $formId ?? 'survey-form' }}" method="POST" action="{{ $action }}" x-data="surveyForm(@js($initialQuestions))" class="space-y-6">
+<form id="{{ $formId ?? 'survey-form' }}" method="POST" action="{{ $action }}" x-data="surveyForm(@js($initialQuestions), @js($isActiveValue ?? false))" class="space-y-6">
     @csrf
     @if (($method ?? 'POST') !== 'POST')
         @method($method)
@@ -23,6 +23,36 @@
                     <option value="{{ $category }}" @selected(old('category', $selectedCategory ?? null) === $category)>{{ $category }}</option>
                 @endforeach
             </select>
+        </div>
+
+        <div class="border-t border-slate-200 dark:border-slate-700 pt-5 space-y-4">
+            <h3 class="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">Survey Settings</h3>
+
+            <div class="flex items-center justify-between">
+                <div>
+                    <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Status</span>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Control whether this survey accepts responses</p>
+                </div>
+                <div>
+                    <input type="hidden" name="is_active" :value="isActive ? 1 : 0">
+                    <button type="button" @click="isActive = !isActive"
+                        :class="isActive ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'"
+                        class="px-4 py-2 rounded-xl font-semibold transition-colors inline-flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full" :class="isActive ? 'bg-emerald-500' : 'bg-slate-400'"></span>
+                        <span x-text="isActive ? 'active' : 'inactive'" class="uppercase tracking-wide text-xs font-black"></span>
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <label for="expires_at" class="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">
+                    Expiry Date <span class="font-normal text-slate-500 dark:text-slate-400">(optional)</span>
+                </label>
+                <input id="expires_at" name="expires_at" type="date"
+                    value="{{ old('expires_at', $expiresAtValue ?? '') }}"
+                    class="w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-900/70 focus:ring-indigo-500 focus:border-indigo-500">
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Survey deactivates automatically on this date.</p>
+            </div>
         </div>
     </div>
 
@@ -71,7 +101,7 @@
 @once
     @push('scripts')
         <script>
-            function surveyForm(initialQuestions) {
+            function surveyForm(initialQuestions, initialIsActive) {
                 const sanitizedQuestions = Array.isArray(initialQuestions) && initialQuestions.length
                     ? initialQuestions
                     : [{text: '', options: ['', '']}];
@@ -85,6 +115,7 @@
 
                 return {
                     questions: normalizedQuestions,
+                    isActive: initialIsActive ?? false,
 
                     addQuestion() {
                         this.questions.push({text: '', options: ['', '']});
