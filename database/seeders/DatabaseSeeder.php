@@ -11,24 +11,27 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(RoleSeeder::class);
 
-        $admin = User::factory()->create([
+        $admin = User::create([
             'name' => 'Admin',
             'email' => 'admin@admin.de',
             'password' => bcrypt('admin'),
+            'email_verified_at' => now(),
         ]);
         $admin->assignRole('admin');
 
-        $customer = User::factory()->create([
+        $customer = User::create([
             'name' => 'Customer',
             'email' => 'customer@customer.de',
             'password' => bcrypt('customer'),
+            'email_verified_at' => now(),
         ]);
         $customer->assignRole('customer');
 
-        $guest = User::factory()->create([
+        $guest = User::create([
             'name' => 'Guest',
             'email' => 'guest@guest.de',
             'password' => bcrypt('guest'),
+            'email_verified_at' => now(),
         ]);
         $guest->assignRole('guest');
 

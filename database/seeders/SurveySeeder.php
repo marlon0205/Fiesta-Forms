@@ -12,63 +12,60 @@ class SurveySeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::query()->first() ?? User::factory()->create([
-            'name' => 'Alex Jensen',
-            'email' => 'alex@example.com',
-        ]);
+        $user = User::query()->first();
 
         $serviceCategoryIds = Service_Categories::query()->pluck('service_category_id')->all();
         $productCategoryIds = Product_Categories::query()->pluck('product_category_id')->all();
 
-        for ($index = 1; $index <= 36; $index++) {
-            $serviceCategoryId = null;
-            $productCategoryId = null;
+        $surveys = [
+            ['title' => 'Wie zufrieden sind Sie mit unserem Smart-Home-Hub?', 'description' => 'Bewerten Sie unseren zentralen Hub für Smart-Home-Geräte.', 'days' => 30, 'active' => true],
+            ['title' => 'Welche Funktionen wünschen Sie sich für unsere App?', 'description' => 'Teilen Sie uns Ihre Wünsche für die nächste App-Version mit.', 'days' => 60, 'active' => true],
+            ['title' => 'Bewertung unserer Smart-Lampen-Serie', 'description' => 'Wie gefällt Ihnen unsere neue LED-Beleuchtungsserie?', 'days' => 45, 'active' => true],
+            ['title' => 'Kundenzufriedenheit Lieferservice', 'description' => 'War die Lieferung Ihres Produkts zufriedenstellend?', 'days' => 14, 'active' => false],
+            ['title' => 'Smart-Thermostat Nutzererfahrung', 'description' => 'Wie einfach ist die Bedienung unseres Thermostats?', 'days' => 21, 'active' => true],
+            ['title' => 'Interesse an Smart-Security-Produkten', 'description' => 'Würden Sie Smart-Sicherheitskameras von uns kaufen?', 'days' => 90, 'active' => true],
+            ['title' => 'Bewertung des Kundensupports', 'description' => 'Wie war Ihre Erfahrung mit unserem Support-Team?', 'days' => 30, 'active' => false],
+            ['title' => 'Smart-Steckdosen – Alltagstauglichkeit', 'description' => 'Nutzen Sie unsere smarten Steckdosen im Alltag?', 'days' => 60, 'active' => true],
+        ];
 
-            if (! empty($serviceCategoryIds) && fake()->boolean(50)) {
-                $serviceCategoryId = fake()->randomElement($serviceCategoryIds);
-            }
+        $questions = [
+            ['text' => 'Wie bewerten Sie die Benutzerfreundlichkeit?', 'options' => ['Sehr gut', 'Gut', 'Befriedigend', 'Schlecht']],
+            ['text' => 'Würden Sie das Produkt weiterempfehlen?', 'options' => ['Ja, auf jeden Fall', 'Wahrscheinlich ja', 'Eher nein', 'Nein']],
+            ['text' => 'Wie oft nutzen Sie das Produkt?', 'options' => ['Täglich', 'Mehrmals pro Woche', 'Selten', 'Nie']],
+            ['text' => 'Wie zufrieden sind Sie mit dem Preis-Leistungs-Verhältnis?', 'options' => ['Sehr zufrieden', 'Zufrieden', 'Neutral', 'Unzufrieden']],
+            ['text' => 'Wie war die Installation?', 'options' => ['Sehr einfach', 'Einfach', 'Schwierig', 'Sehr schwierig']],
+            ['text' => 'Wie beurteilen Sie die Verarbeitungsqualität?', 'options' => ['Ausgezeichnet', 'Gut', 'Durchschnittlich', 'Mangelhaft']],
+        ];
 
-            if (! empty($productCategoryIds) && fake()->boolean(50)) {
-                $productCategoryId = fake()->randomElement($productCategoryIds);
-            }
+        $svcCount = count($serviceCategoryIds);
+        $prodCount = count($productCategoryIds);
 
-            if (! $serviceCategoryId && ! $productCategoryId) {
-                if (! empty($serviceCategoryIds)) {
-                    $serviceCategoryId = fake()->randomElement($serviceCategoryIds);
-                } elseif (! empty($productCategoryIds)) {
-                    $productCategoryId = fake()->randomElement($productCategoryIds);
-                }
+        foreach ($surveys as $i => $data) {
+            $svcId = $svcCount > 0 && $i % 2 === 0 ? $serviceCategoryIds[$i % $svcCount] : null;
+            $prodId = $prodCount > 0 && $i % 2 !== 0 ? $productCategoryIds[$i % $prodCount] : null;
+            if (!$svcId && !$prodId && $svcCount > 0) {
+                $svcId = $serviceCategoryIds[$i % $svcCount];
             }
 
             $survey = Survey::create([
-                'title' => fake()->unique()->sentence(4),
-                'description' => fake()->sentence(12),
+                'title' => $data['title'],
+                'description' => $data['description'],
                 'user_id' => $user->user_id,
-                'service_category_id' => $serviceCategoryId,
-                'product_category_id' => $productCategoryId,
-                'is_active' => fake()->boolean(70),
-                'duration_days' => fake()->numberBetween(7, 90),
-                'created_at' => now()->subDays(fake()->numberBetween(0, 120)),
+                'service_category_id' => $svcId,
+                'product_category_id' => $prodId,
+                'is_active' => $data['active'],
+                'duration_days' => $data['days'],
+                'created_at' => now()->subDays($i * 5),
                 'updated_at' => now(),
             ]);
 
-            $questionCount = fake()->numberBetween(2, 6);
-
-            for ($questionIndex = 1; $questionIndex <= $questionCount; $questionIndex++) {
-                $question = $survey->questions()->create([
-                    'question_text' => fake()->sentence(8),
-                ]);
-
-                $optionCount = fake()->numberBetween(2, 5);
-
-                for ($optionIndex = 1; $optionIndex <= $optionCount; $optionIndex++) {
-                    $question->answerOptions()->create([
-                        'option_text' => fake()->words(fake()->numberBetween(1, 4), true),
-                    ]);
+            $surveyQuestions = array_slice($questions, 0, ($i % 3) + 2);
+            foreach ($surveyQuestions as $q) {
+                $question = $survey->questions()->create(['question_text' => $q['text']]);
+                foreach ($q['options'] as $opt) {
+                    $question->answerOptions()->create(['option_text' => $opt]);
                 }
             }
         }
-
-        fake()->unique(true);
     }
 }

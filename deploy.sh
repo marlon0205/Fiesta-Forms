@@ -118,9 +118,10 @@ fi
 . .env
 info "Secrets loaded"
 
-# ── Stop & remove old containers if exist ────────────────────
+# ── Stop & remove old containers + volume (keeps credentials in sync) ────────
 step "Cleanup old containers"
 $DOCKER rm -f "$APP_CONTAINER" "$DB_CONTAINER" 2>/dev/null && warn "Removed old containers" || true
+$DOCKER volume rm fiesta-db-data 2>/dev/null && warn "Removed old DB volume (will be recreated)" || true
 
 # ── Build image locally ───────────────────────────────────────
 step "Building Docker image locally (3-8 min)"
