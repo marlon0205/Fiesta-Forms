@@ -1,16 +1,16 @@
 <?php
 
-namespace App\View\Components\Dashboard;
+namespace App\View\Components\Cyber;
 
 use App\Models\Votes;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\Component;
 
-class TopUsers extends Component {
-
+class TopUsers extends Component
+{
     public $votes;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->votes = Votes::select('users.name')
             ->selectRaw('COUNT(votes.vote_id) as total_votes')
             ->join('users', 'votes.user_id', '=', 'users.user_id')
@@ -24,9 +24,10 @@ class TopUsers extends Component {
             ]);
     }
 
-    public function render() {
+    public function render()
+    {
         return view('components.cyber.top-voters', [
-            'voters' => $this->votes
+            'voters' => $this->votes,
         ]);
     }
 }

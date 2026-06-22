@@ -1,6 +1,6 @@
 <?php
 
-namespace App\View\Components\Dashboard;
+namespace App\View\Components\Cyber;
 
 use App\Models\Survey;
 use App\Models\User;
@@ -18,13 +18,12 @@ class StatsOverview extends Component
     {
         $this->totalForms = Survey::count();
         $this->activePolls = Survey::where('is_active', true)->count();
-
         $this->totalResponses = Votes::count();
         $this->totalUsers = User::count();
     }
 
     public function render()
     {
-        return view('components.dashboard.stats-overview');
+        return view('components.cyber.stats-overview');
     }
 }

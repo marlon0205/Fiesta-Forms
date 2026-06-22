@@ -1,14 +1,16 @@
 <?php
 
-namespace App\View\Components\Dashboard;
+namespace App\View\Components\Cyber;
 
 use App\Models\Survey;
 use Illuminate\View\Component;
 
-class RecentActivity extends Component {
+class RecentActivity extends Component
+{
     public $recentSurveys;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->recentSurveys = Survey::with(['serviceCategory', 'productCategory'])
             ->withCount('votes')
             ->latest()
@@ -24,7 +26,8 @@ class RecentActivity extends Component {
             ]);
     }
 
-    public function render() {
-        return view('components.dashboard.recent-activity');
+    public function render()
+    {
+        return view('components.cyber.recent-activity');
     }
 }

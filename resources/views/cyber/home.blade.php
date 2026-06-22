@@ -11,17 +11,11 @@
         <p class="text-slate-500 dark:text-slate-400 font-medium">Here's what's happening in your workspace today.</p>
     </div>
 
-    <!-- KPI Cards via StatsOverview Component -->
-    <!-- inserts file resources/views/components/dashboard/stats-overview.blade.php -->
-    <x-dashboard.stats-overview />
+    <x-cyber.stats-overview />
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Recent Forms List via RecentActivity Component -->
-        <x-dashboard.recent-activity />
-
-        <!-- Top Voters Leaderboard via TopUsers Component -->
-        <x-dashboard.top-users />
+        <x-cyber.recent-activity />
+        <x-cyber.top-users />
     </div>
 </div>
 @endsection
-

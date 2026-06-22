@@ -3,5 +3,5 @@
 @section('title', 'Explore Forms')
 
 @section('content')
-    <x-survey.explore />
+    <x-cyber.explore-content />
 @endsection
