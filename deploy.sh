@@ -3,19 +3,22 @@ set -euo pipefail
 
 # ─────────────────────────────────────────────────────────────
 # Fiesta Forms — Automated Deploy Script
-# Requires: nothing (installs git + docker automatically on Linux)
+# Requires: bash, curl (git + docker auto-installed on Linux)
 # Usage:  bash deploy.sh [--seed] [--port 8080]
 #
-# What runs INSIDE Docker (no host install needed):
-#   PHP 8.4, Composer, Node 20, npm, PostgreSQL 17, Redis, Nginx
+# Everything runs inside Docker — no PHP/Composer/Node needed on host.
+# Image is built locally, never pushed to any registry.
 # ─────────────────────────────────────────────────────────────
 
 REPO_URL="https://github.com/marlon0205/Fiesta-Forms.git"
 APP_DIR="Fiesta-Forms"
+IMAGE_NAME="fiesta-forms"
+NETWORK="fiesta-net"
+DB_CONTAINER="fiesta-db"
+APP_CONTAINER="fiesta-app"
 SEED=false
 PORT=80
 
-# ── Parse args ───────────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
   case $1 in
     --seed) SEED=true; shift ;;
@@ -24,7 +27,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# ── Colors ───────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 info()  { echo -e "${GREEN}[✓]${NC} $*"; }
 warn()  { echo -e "${YELLOW}[!]${NC} $*"; }
@@ -40,17 +42,15 @@ if ! command -v git >/dev/null 2>&1; then
   if [ "$OS" = "Linux" ]; then
     if command -v apt-get >/dev/null 2>&1; then
       sudo apt-get update -qq && sudo apt-get install -y -qq git
-    elif command -v yum >/dev/null 2>&1; then
-      sudo yum install -y git
     elif command -v dnf >/dev/null 2>&1; then
       sudo dnf install -y git
+    elif command -v yum >/dev/null 2>&1; then
+      sudo yum install -y git
     else
-      error "Cannot install git automatically. Please install git manually."
+      error "Cannot auto-install git. Install it manually."
     fi
-  elif [ "$OS" = "Darwin" ]; then
-    error "git not found. Install via: xcode-select --install"
   else
-    error "Cannot install git automatically on $OS. Please install git manually."
+    error "git not found. Install it manually."
   fi
 fi
 info "git $(git --version | awk '{print $3}')"
@@ -58,56 +58,29 @@ info "git $(git --version | awk '{print $3}')"
 # ── Install Docker if missing ────────────────────────────────
 step "Checking Docker"
 if ! command -v docker >/dev/null 2>&1; then
-  warn "Docker not found — installing via official script..."
   if [ "$OS" != "Linux" ]; then
-    error "Auto-install only works on Linux. Download Docker Desktop for $OS from https://docs.docker.com/get-docker/"
+    error "Docker not found. Install Docker Desktop for $OS: https://docs.docker.com/get-docker/"
   fi
+  warn "Docker not found — installing via official script..."
   curl -fsSL https://get.docker.com | sudo sh
   sudo systemctl enable --now docker
-  # Add current user to docker group so sudo isn't needed for docker commands
-  if [ -n "${SUDO_USER:-}" ]; then
-    sudo usermod -aG docker "$SUDO_USER"
-  else
-    sudo usermod -aG docker "$USER" 2>/dev/null || true
-  fi
-  warn "Docker installed. You may need to log out and back in for group permissions."
-  warn "Continuing as root for this run..."
-  DOCKER_CMD="sudo docker"
+  DOCKER="sudo docker"
 else
-  DOCKER_CMD="docker"
+  DOCKER="docker"
 fi
 
-if ! $DOCKER_CMD info >/dev/null 2>&1; then
+if ! $DOCKER info >/dev/null 2>&1; then
   if [ "$OS" = "Linux" ]; then
     warn "Docker daemon not running — starting..."
     sudo systemctl start docker
     sleep 3
-    $DOCKER_CMD info >/dev/null 2>&1 || error "Docker daemon failed to start. Run: sudo systemctl status docker"
-  else
-    error "Docker is not running. Start Docker Desktop first."
   fi
+  $DOCKER info >/dev/null 2>&1 || error "Docker daemon failed to start."
 fi
-info "Docker $($DOCKER_CMD --version | awk '{print $3}' | tr -d ',')"
-
-# ── Resolve docker compose command ──────────────────────────
-if $DOCKER_CMD compose version >/dev/null 2>&1; then
-  DC="$DOCKER_CMD compose"
-elif command -v docker-compose >/dev/null 2>&1; then
-  DC="docker-compose"
-else
-  warn "Docker Compose plugin not found — installing..."
-  if command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get install -y -qq docker-compose-plugin
-    DC="$DOCKER_CMD compose"
-  else
-    error "Could not install Docker Compose. Please install it manually: https://docs.docker.com/compose/install/"
-  fi
-fi
-info "Compose: $DC"
+info "Docker $($DOCKER --version | awk '{print $3}' | tr -d ',')"
 
 # ── Clone or update ──────────────────────────────────────────
 step "Repository"
-
 if [ -d "$APP_DIR/.git" ]; then
   warn "Directory '$APP_DIR' exists — pulling latest changes"
   git -C "$APP_DIR" pull --ff-only
@@ -115,24 +88,17 @@ else
   git clone "$REPO_URL" "$APP_DIR"
   info "Cloned into $APP_DIR"
 fi
-
 cd "$APP_DIR"
 
-# ── Random string helpers (pipefail-safe) ────────────────────
-random_b64_32() {
-  dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d '\n'
-}
-random_alnum() {
-  dd if=/dev/urandom bs=256 count=1 2>/dev/null | base64 | tr -dc 'A-Za-z0-9' | dd bs=1 count=32 2>/dev/null
-}
+# ── Generate secrets (pipefail-safe, no external tools) ──────
+random_b64_32() { dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d '\n'; }
+random_alnum()  { dd if=/dev/urandom bs=256 count=1 2>/dev/null | base64 | tr -dc 'A-Za-z0-9' | dd bs=1 count=32 2>/dev/null; }
 
 # ── .env setup ───────────────────────────────────────────────
 step "Environment configuration"
-
 if [ ! -f .env ]; then
   APP_KEY="base64:$(random_b64_32)"
   DB_PASS="$(random_alnum)"
-
   cat > .env <<EOF
 APP_ENV=production
 APP_DEBUG=false
@@ -144,55 +110,95 @@ DB_DATABASE=fiesta_forms
 DB_USERNAME=fiesta
 DB_PASSWORD=${DB_PASS}
 EOF
-
-  info ".env created with generated APP_KEY and random DB password"
+  info ".env created"
 else
   warn ".env already exists — skipping generation"
-  if ! grep -q "^APP_PORT=" .env; then
-    echo "APP_PORT=${PORT}" >> .env
-  fi
 fi
 
-# Export vars so docker compose can read them
-set -a
-# shellcheck disable=SC1091
 . .env
-set +a
+info "Secrets loaded"
 
-# ── Build ─────────────────────────────────────────────────────
-step "Building Docker image"
-echo "  (installs PHP 8.4, Composer, Node 20, npm, builds frontend — takes 3-8 min)"
-$DC -f docker-compose-prod.yml build --no-cache
-info "Build complete"
+# ── Stop & remove old containers if exist ────────────────────
+step "Cleanup old containers"
+$DOCKER rm -f "$APP_CONTAINER" "$DB_CONTAINER" 2>/dev/null && warn "Removed old containers" || true
 
-# ── Start services ────────────────────────────────────────────
-step "Starting services (app + PostgreSQL)"
-$DC -f docker-compose-prod.yml up -d
-info "Containers started"
+# ── Build image locally ───────────────────────────────────────
+step "Building Docker image locally (3-8 min)"
+echo "  PHP 8.4 + Composer + Node 20 + npm all install inside the image"
+$DOCKER build \
+  --target production \
+  --tag "$IMAGE_NAME:latest" \
+  .
+info "Image built: $IMAGE_NAME:latest"
 
-# ── Wait for app to be healthy ───────────────────────────────
-step "Waiting for application to be ready"
-RETRIES=40
+# ── Create network ───────────────────────────────────────────
+$DOCKER network create "$NETWORK" 2>/dev/null || true
+
+# ── Start PostgreSQL ─────────────────────────────────────────
+step "Starting PostgreSQL 17"
+$DOCKER run -d \
+  --name "$DB_CONTAINER" \
+  --network "$NETWORK" \
+  --restart unless-stopped \
+  -v fiesta-db-data:/var/lib/postgresql/data \
+  -e POSTGRES_DB="$DB_DATABASE" \
+  -e POSTGRES_USER="$DB_USERNAME" \
+  -e POSTGRES_PASSWORD="$DB_PASSWORD" \
+  postgres:17-alpine
+info "PostgreSQL started"
+
+# Wait for DB to be ready
+echo -n "  Waiting for database"
+for i in $(seq 1 20); do
+  if $DOCKER exec "$DB_CONTAINER" pg_isready -q -U "$DB_USERNAME" 2>/dev/null; then
+    echo " ready"
+    break
+  fi
+  echo -n "."
+  sleep 2
+done
+
+# ── Start App ─────────────────────────────────────────────────
+step "Starting app"
+$DOCKER run -d \
+  --name "$APP_CONTAINER" \
+  --network "$NETWORK" \
+  --restart unless-stopped \
+  -p "${PORT}:80" \
+  -e APP_ENV=production \
+  -e APP_DEBUG=false \
+  -e APP_KEY="$APP_KEY" \
+  -e APP_URL="http://localhost:${PORT}" \
+  -e DB_CONNECTION=pgsql \
+  -e DB_HOST="$DB_CONTAINER" \
+  -e DB_PORT=5432 \
+  -e DB_DATABASE="$DB_DATABASE" \
+  -e DB_USERNAME="$DB_USERNAME" \
+  -e DB_PASSWORD="$DB_PASSWORD" \
+  -e SESSION_DRIVER=database \
+  -e CACHE_STORE=database \
+  -e QUEUE_CONNECTION=database \
+  -e LOG_CHANNEL=stderr \
+  -e LOG_LEVEL=error \
+  "$IMAGE_NAME:latest"
+info "App container started"
+
+# ── Wait for app ──────────────────────────────────────────────
+step "Waiting for application"
 echo -n "  "
-until curl -sf "http://localhost:${PORT}" >/dev/null 2>&1 || [ $RETRIES -eq 0 ]; do
+RETRIES=40
+until curl -sf "http://localhost:${PORT}" >/dev/null 2>&1 || [ "$RETRIES" -eq 0 ]; do
   RETRIES=$((RETRIES - 1))
   echo -n "."
   sleep 3
 done
 echo ""
-
-if [ $RETRIES -eq 0 ]; then
-  warn "App did not respond on port ${PORT} within 2 min."
-  warn "Check logs: $DC -f docker-compose-prod.yml logs app"
-else
-  info "App is up and responding"
-fi
+[ "$RETRIES" -eq 0 ] && warn "App not responding — check: $DOCKER logs $APP_CONTAINER" || info "App is up"
 
 # ── Optional seed ─────────────────────────────────────────────
 if [ "$SEED" = true ]; then
-  step "Seeding database with test accounts"
-  APP_CONTAINER=$($DC -f docker-compose-prod.yml ps -q app)
-  $DOCKER_CMD exec "$APP_CONTAINER" php artisan migrate:fresh --seed --force --no-interaction
+  step "Seeding database"
+  $DOCKER exec "$APP_CONTAINER" php artisan migrate:fresh --seed --force --no-interaction
   info "Database seeded"
 fi
 
@@ -200,14 +206,14 @@ fi
 echo ""
 echo -e "${GREEN}═══════════════════════════════════════════${NC}"
 echo -e "${GREEN}  Fiesta Forms is running!${NC}"
-echo -e "${GREEN}  URL:  http://localhost:${PORT}${NC}"
+echo -e "${GREEN}  URL : http://localhost:${PORT}${NC}"
 if [ "$SEED" = true ]; then
 echo -e "${GREEN}  admin@admin.de       / admin${NC}"
 echo -e "${GREEN}  customer@customer.de / customer${NC}"
 echo -e "${GREEN}  guest@guest.de       / guest${NC}"
 fi
-echo -e "${GREEN}═══════════════════════════════────────────${NC}"
+echo -e "${GREEN}═══════════════════════════════════════════${NC}"
 echo ""
-echo "  Logs:  $DC -f $APP_DIR/docker-compose-prod.yml logs -f"
-echo "  Stop:  $DC -f $APP_DIR/docker-compose-prod.yml down"
+echo "  Logs : $DOCKER logs -f $APP_CONTAINER"
+echo "  Stop : $DOCKER rm -f $APP_CONTAINER $DB_CONTAINER"
 echo ""
