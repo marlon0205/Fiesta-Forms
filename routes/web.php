@@ -48,7 +48,7 @@ Route::get('/explore', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/profile-edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile-edit', [ProfileController::class, 'update'])->name('profile.update');
-    Route::put('/password-update', [ProfileController::class, 'updatePassword'])->name('password.update');
+    Route::put('/password-update', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
     Route::delete('/profile-edit', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 

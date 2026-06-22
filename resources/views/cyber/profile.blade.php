@@ -10,7 +10,7 @@
     $canEditProfile = $canEditProfile ?? auth()->id() === $user->user_id;
     $isAdminEditingUser = $isAdminEditingUser ?? false;
     $profileUpdateRoute = $isAdminEditingUser ? route('admin.user.update', $user) : route('profile.update');
-    $passwordUpdateRoute = $isAdminEditingUser ? route('admin.user.password.update', $user) : route('password.update');
+    $passwordUpdateRoute = $isAdminEditingUser ? route('admin.user.password.update', $user) : route('profile.password.update');
     $destroyRoute = $isAdminEditingUser ? route('admin.user.destroy', $user) : route('profile.destroy');
     $votesCount = $user->votes_count ?? $user->votes()->count();
     $lastActivity = $lastActivityAt
