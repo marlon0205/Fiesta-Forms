@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@admin.de',
             'password' => bcrypt('admin'),
             'email_verified_at' => now(),
+            'is_active' => true,
         ]);
         $admin->assignRole('admin');
 
@@ -24,6 +25,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'customer@customer.de',
             'password' => bcrypt('customer'),
             'email_verified_at' => now(),
+            'is_active' => true,
         ]);
         $customer->assignRole('customer');
 
@@ -32,6 +34,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'guest@guest.de',
             'password' => bcrypt('guest'),
             'email_verified_at' => now(),
+            'is_active' => true,
         ]);
         $guest->assignRole('guest');
 
