@@ -43,6 +43,44 @@
                     <input id="password" type="password" name="password"
                            required autocomplete="new-password"
                            class="w-full bg-white/60 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 focus:border-pink-500 dark:focus:border-pink-400 focus:ring-2 focus:ring-pink-500/20 text-slate-800 dark:text-white rounded-xl px-4 py-3 text-sm font-medium focus:outline-none transition-colors placeholder-slate-400 dark:placeholder-slate-500 shadow-sm">
+
+                    {{-- Strength bar --}}
+                    <div class="flex gap-1 mt-2" id="strength-bars">
+                        <div class="h-1 flex-1 rounded-full bg-slate-200 dark:bg-slate-700 transition-colors duration-300" id="bar-1"></div>
+                        <div class="h-1 flex-1 rounded-full bg-slate-200 dark:bg-slate-700 transition-colors duration-300" id="bar-2"></div>
+                        <div class="h-1 flex-1 rounded-full bg-slate-200 dark:bg-slate-700 transition-colors duration-300" id="bar-3"></div>
+                        <div class="h-1 flex-1 rounded-full bg-slate-200 dark:bg-slate-700 transition-colors duration-300" id="bar-4"></div>
+                        <div class="h-1 flex-1 rounded-full bg-slate-200 dark:bg-slate-700 transition-colors duration-300" id="bar-5"></div>
+                    </div>
+                    <p class="text-xs font-bold mt-1 hidden" id="strength-label"></p>
+
+                    {{-- Criteria checklist --}}
+                    <div class="mt-3 space-y-1.5 hidden" id="pw-criteria">
+                        <p class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Password must contain:</p>
+                        <div class="grid grid-cols-1 gap-1">
+                            <div class="flex items-center gap-2" id="crit-length">
+                                <span class="text-slate-300 dark:text-slate-600 text-xs" id="icon-length">○</span>
+                                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400" id="text-length">At least 12 characters</span>
+                            </div>
+                            <div class="flex items-center gap-2" id="crit-upper">
+                                <span class="text-slate-300 dark:text-slate-600 text-xs" id="icon-upper">○</span>
+                                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400" id="text-upper">Uppercase letter (A–Z)</span>
+                            </div>
+                            <div class="flex items-center gap-2" id="crit-lower">
+                                <span class="text-slate-300 dark:text-slate-600 text-xs" id="icon-lower">○</span>
+                                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400" id="text-lower">Lowercase letter (a–z)</span>
+                            </div>
+                            <div class="flex items-center gap-2" id="crit-number">
+                                <span class="text-slate-300 dark:text-slate-600 text-xs" id="icon-number">○</span>
+                                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400" id="text-number">Number (0–9)</span>
+                            </div>
+                            <div class="flex items-center gap-2" id="crit-symbol">
+                                <span class="text-slate-300 dark:text-slate-600 text-xs" id="icon-symbol">○</span>
+                                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400" id="text-symbol">Special character (!@#$…)</span>
+                            </div>
+                        </div>
+                    </div>
+
                     @error('password')
                         <p class="text-xs text-pink-500 font-semibold mt-1">{{ $message }}</p>
                     @enderror
@@ -77,4 +115,64 @@
 
         </div>
     </div>
+
+    <script>
+        const pwInput = document.getElementById('password');
+        const criteria = document.getElementById('pw-criteria');
+        const strengthLabel = document.getElementById('strength-label');
+        const bars = [1,2,3,4,5].map(i => document.getElementById('bar-' + i));
+
+        const checks = {
+            length: { el: 'icon-length', text: 'text-length', test: v => v.length >= 12 },
+            upper:  { el: 'icon-upper',  text: 'text-upper',  test: v => /[A-Z]/.test(v) },
+            lower:  { el: 'icon-lower',  text: 'text-lower',  test: v => /[a-z]/.test(v) },
+            number: { el: 'icon-number', text: 'text-number', test: v => /[0-9]/.test(v) },
+            symbol: { el: 'icon-symbol', text: 'text-symbol', test: v => /[^A-Za-z0-9]/.test(v) },
+        };
+
+        const strengthConfig = [
+            { label: 'Very weak', color: 'bg-red-500',    textClass: 'text-red-500',    bars: 1 },
+            { label: 'Weak',      color: 'bg-orange-500', textClass: 'text-orange-500', bars: 2 },
+            { label: 'Fair',      color: 'bg-yellow-500', textClass: 'text-yellow-500', bars: 3 },
+            { label: 'Strong',    color: 'bg-emerald-500',textClass: 'text-emerald-500',bars: 4 },
+            { label: 'Very strong', color: 'bg-green-500',textClass: 'text-green-500', bars: 5 },
+        ];
+
+        pwInput.addEventListener('input', () => {
+            const val = pwInput.value;
+
+            if (val.length === 0) {
+                criteria.classList.add('hidden');
+                strengthLabel.classList.add('hidden');
+                bars.forEach(b => b.className = 'h-1 flex-1 rounded-full bg-slate-200 dark:bg-slate-700 transition-colors duration-300');
+                return;
+            }
+
+            criteria.classList.remove('hidden');
+
+            let passed = 0;
+            Object.values(checks).forEach(({ el, text, test }) => {
+                const ok = test(val);
+                if (ok) passed++;
+                const icon = document.getElementById(el);
+                const label = document.getElementById(text);
+                icon.textContent = ok ? '✓' : '○';
+                icon.className = ok
+                    ? 'text-emerald-500 text-xs font-black'
+                    : 'text-slate-300 dark:text-slate-600 text-xs';
+                label.className = ok
+                    ? 'text-xs font-semibold text-emerald-600 dark:text-emerald-400'
+                    : 'text-xs font-semibold text-slate-500 dark:text-slate-400';
+            });
+
+            const cfg = strengthConfig[passed - 1] ?? strengthConfig[0];
+            bars.forEach((b, i) => {
+                b.className = `h-1 flex-1 rounded-full transition-colors duration-300 ${i < cfg.bars ? cfg.color : 'bg-slate-200 dark:bg-slate-700'}`;
+            });
+
+            strengthLabel.classList.remove('hidden');
+            strengthLabel.textContent = cfg.label;
+            strengthLabel.className = `text-xs font-bold mt-1 ${cfg.textClass}`;
+        });
+    </script>
 </x-guest-layout>
